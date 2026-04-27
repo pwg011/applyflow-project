@@ -41,11 +41,7 @@ function getApplicationHref(jobLink?: string | null) {
   return `https://${jobLink}`;
 }
 
-function JobPostingSection({
-  rawJobText,
-}: {
-  rawJobText?: string | null;
-}) {
+function JobPostingSection({ rawJobText }: { rawJobText?: string | null }) {
   const [isJobPostingOpen, setIsJobPostingOpen] = useState(false);
   const hasRawJobText = (rawJobText ?? "").trim() !== "";
 
@@ -69,7 +65,7 @@ function JobPostingSection({
 
       {hasRawJobText ? (
         isJobPostingOpen ? (
-          <div className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700">
+          <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700 sm:max-h-72">
             {rawJobText}
           </div>
         ) : null
@@ -100,7 +96,7 @@ export default function ApplicationDetailsModal({
       aria-hidden={!selectedApplication}
     >
       <div
-        className={`w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
+        className={`flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
           selectedApplication
             ? "translate-y-0 scale-100"
             : "translate-y-4 scale-95"
@@ -130,7 +126,7 @@ export default function ApplicationDetailsModal({
               </button>
             </div>
 
-            <div className="space-y-6 px-6 py-5">
+            <div className="space-y-6 overflow-y-auto px-6 py-5 pr-4">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -194,6 +190,15 @@ export default function ApplicationDetailsModal({
                 key={selectedApplication.id}
                 rawJobText={selectedApplication.raw_job_text}
               />
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Analysis
+                </p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                  No analysis yet. AI insights will appear here.
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
