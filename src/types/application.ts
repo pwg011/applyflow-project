@@ -7,6 +7,7 @@ export type Application = {
   status: string;
   date_applied?: string | null;
   notes?: string | null;
+  persona_id?: string | null;
   raw_job_text?: string | null;
   source_type?: string | null;
   imported_at?: string | null;

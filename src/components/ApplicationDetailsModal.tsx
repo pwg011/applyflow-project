@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import type { Application } from "@/types/application";
+import type { Persona } from "@/types/persona";
 
 type ApplicationStatus = "Applied" | "Interview" | "Offer" | "Rejected";
 type ApplicationId = Application["id"];
@@ -15,6 +17,11 @@ type ApplicationDetailsModalProps = {
   ) => void | Promise<void>;
   onEdit: (application: Application) => void;
   onDelete: (application: Application) => void;
+};
+
+type PersonaFeedback = {
+  message: string;
+  tone: "success" | "error";
 };
 
 function formatDate(dateApplied?: string | null) {
@@ -85,6 +92,135 @@ export default function ApplicationDetailsModal({
   onEdit,
   onDelete,
 }: ApplicationDetailsModalProps) {
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [isPersonasLoading, setIsPersonasLoading] = useState(false);
+  const [isSavingPersona, setIsSavingPersona] = useState(false);
+  const [personaSelectionByApplicationId, setPersonaSelectionByApplicationId] =
+    useState<Record<string, string>>({});
+  const [personaFeedback, setPersonaFeedback] = useState<PersonaFeedback | null>(
+    null,
+  );
+
+  const currentPersonaId = selectedApplication
+    ? personaSelectionByApplicationId[selectedApplication.id] ??
+      selectedApplication.persona_id ??
+      ""
+    : "";
+
+  useEffect(() => {
+    if (!selectedApplication) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function loadPersonas() {
+      setIsPersonasLoading(true);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        if (isActive) {
+          setPersonas([]);
+          setIsPersonasLoading(false);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("personas")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+
+      if (!isActive) {
+        return;
+      }
+
+      if (error) {
+        setPersonas([]);
+        setPersonaFeedback({
+          message: error.message || "Could not load personas.",
+          tone: "error",
+        });
+        setIsPersonasLoading(false);
+        return;
+      }
+
+      setPersonas((data ?? []) as Persona[]);
+      setIsPersonasLoading(false);
+    }
+
+    void loadPersonas();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedApplication]);
+
+  useEffect(() => {
+    if (!personaFeedback) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPersonaFeedback(null);
+    }, 2500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [personaFeedback]);
+
+  async function handlePersonaChange(personaId: string) {
+    if (!selectedApplication) {
+      return;
+    }
+
+    setIsSavingPersona(true);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      setPersonaFeedback({
+        message: "You must be logged in to link a persona.",
+        tone: "error",
+      });
+      setIsSavingPersona(false);
+      return;
+    }
+
+    const nextPersonaId = personaId || null;
+    const { error } = await supabase
+      .from("applications")
+      .update({ persona_id: nextPersonaId })
+      .eq("id", selectedApplication.id)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      setPersonaFeedback({
+        message: error.message || "Could not update persona.",
+        tone: "error",
+      });
+      setIsSavingPersona(false);
+      return;
+    }
+
+    setPersonaSelectionByApplicationId((current) => ({
+      ...current,
+      [selectedApplication.id]: personaId,
+    }));
+    setPersonaFeedback({
+      message: personaId ? "Persona linked successfully." : "Persona cleared.",
+      tone: "success",
+    });
+    setIsSavingPersona(false);
+  }
+
   return (
     <div
       className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 px-6 backdrop-blur-sm transition-all duration-300 ${
@@ -190,6 +326,61 @@ export default function ApplicationDetailsModal({
                 key={selectedApplication.id}
                 rawJobText={selectedApplication.raw_job_text}
               />
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Persona
+                </p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="applicationPersona"
+                      className="text-sm font-medium text-slate-700"
+                    >
+                      Linked persona
+                    </label>
+                    <select
+                      id="applicationPersona"
+                      value={currentPersonaId}
+                      onChange={(event) =>
+                        void handlePersonaChange(event.target.value)
+                      }
+                      disabled={isPersonasLoading || isSavingPersona}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <option value="">No persona selected</option>
+                      {personas.map((persona) => (
+                        <option key={persona.id} value={persona.id}>
+                          {persona.display_name}
+                          {persona.professional_title
+                            ? ` - ${persona.professional_title}`
+                            : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mt-3 min-h-5 text-sm">
+                    {isPersonasLoading ? (
+                      <p className="text-slate-500">Loading personas...</p>
+                    ) : personaFeedback ? (
+                      <p
+                        className={
+                          personaFeedback.tone === "success"
+                            ? "text-slate-700"
+                            : "text-red-600"
+                        }
+                      >
+                        {personaFeedback.message}
+                      </p>
+                    ) : (
+                      <p className="text-slate-500">
+                        Choose a persona to tailor future AI workflows for this application.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
