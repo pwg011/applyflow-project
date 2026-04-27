@@ -1,11 +1,14 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import BurgerMenu from "@/components/BurgerMenu";
 import PersonaCard from "@/components/PersonaCard";
 import PersonaForm from "@/components/PersonaForm";
+import ProfileDropdown from "@/components/ProfileDropdown";
 import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
+import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 type PersonaFormData = {
@@ -49,6 +52,9 @@ function mapRowToPersona(row: Partial<Persona>): Persona {
 }
 
 export default function PersonasPage() {
+  const burgerMenuRef = useRef<HTMLDivElement | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -59,6 +65,8 @@ export default function PersonasPage() {
   const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   function showToast(message: string, tone: ToastState["tone"]) {
     setToast({ message, tone });
@@ -152,6 +160,50 @@ export default function PersonasPage() {
       window.clearTimeout(timeoutId);
     };
   }, [toast]);
+
+  useEffect(() => {
+    if (!isBurgerMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!burgerMenuRef.current) {
+        return;
+      }
+
+      if (!burgerMenuRef.current.contains(event.target as Node)) {
+        setIsBurgerMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isBurgerMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!profileMenuRef.current) {
+        return;
+      }
+
+      if (!profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isProfileMenuOpen]);
 
   function closeForm() {
     setIsFormOpen(false);
@@ -288,6 +340,20 @@ export default function PersonasPage() {
     showToast("Persona deleted", "success");
   }
 
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      logSupabaseError("log out", error);
+      return;
+    }
+
+    setUser(null);
+    setPersonas([]);
+    setIsProfileMenuOpen(false);
+    closeForm();
+  }
+
   if (!isAuthReady) {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
@@ -314,28 +380,68 @@ export default function PersonasPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm text-slate-500">ApplyFlow</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-              Personas
-            </h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Build reusable professional personas for future AI-assisted workflows.
-            </p>
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div ref={burgerMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsBurgerMenuOpen((current) => !current)}
+              aria-label="Open navigation menu"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
+            >
+              ☰
+            </button>
+
+            <BurgerMenu
+              isOpen={isBurgerMenuOpen}
+              currentPath={pathname}
+            />
           </div>
 
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            <span aria-hidden="true" className="text-base leading-none">
-              +
-            </span>
-            Create Persona
-          </button>
+          <div className="text-center">
+            <p className="text-sm text-slate-500">ApplyFlow</p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+              Personas
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              <span aria-hidden="true" className="text-base leading-none">
+                +
+              </span>
+              Create Persona
+            </button>
+
+            <div ref={profileMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen((current) => !current)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm"
+              >
+                P
+              </button>
+
+              <ProfileDropdown
+                user={user}
+                onLogout={handleLogout}
+                isOpen={isProfileMenuOpen}
+                onClose={() => setIsProfileMenuOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8">
+          <p className="text-sm text-slate-500">
+            Build reusable professional personas for future AI-assisted workflows.
+          </p>
         </div>
 
         {isLoading ? (

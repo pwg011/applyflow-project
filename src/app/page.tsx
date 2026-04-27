@@ -3,6 +3,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import ApplicationDetailsModal from "@/components/ApplicationDetailsModal";
+import BurgerMenu from "@/components/BurgerMenu";
 import DeleteApplicationModal from "@/components/DeleteApplicationModal";
 import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal from "@/components/ImportPreviewModal";
@@ -10,6 +11,7 @@ import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import { supabase } from "@/lib/supabaseClient";
 import ApplicationCard from "@/components/ApplicationCard";
+import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import type { Application } from "@/types/application";
 import {
@@ -73,7 +75,9 @@ const initialFormData = {
 
 export default function Home() {
   const addMenuRef = useRef<HTMLDivElement | null>(null);
+  const burgerMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
@@ -102,6 +106,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const totalApplications = applications.length;
@@ -297,6 +302,28 @@ export default function Home() {
       document.removeEventListener("mousedown", handlePointerDown);
     };
   }, [isAddOptionModalOpen]);
+
+  useEffect(() => {
+    if (!isBurgerMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!burgerMenuRef.current) {
+        return;
+      }
+
+      if (!burgerMenuRef.current.contains(event.target as Node)) {
+        setIsBurgerMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isBurgerMenuOpen]);
 
   useEffect(() => {
     if (!isProfileMenuOpen) {
@@ -776,12 +803,29 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* TOP NAV */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">ApplyFlow</h1>
-            <p className="mt-1 text-sm text-slate-500">{user.email}</p>
+          <div ref={burgerMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsBurgerMenuOpen((current) => !current)}
+              aria-label="Open navigation menu"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
+            >
+              {"\u2630"}
+            </button>
+
+            <BurgerMenu
+              isOpen={isBurgerMenuOpen}
+              currentPath={pathname}
+            />
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-slate-500">ApplyFlow</p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+              Applications
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -808,10 +852,6 @@ export default function Home() {
               />
             </div>
 
-            <button className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm hover:bg-slate-50">
-              ☰
-            </button>
-
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
@@ -832,7 +872,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* DASHBOARD */}
       <section className="mx-auto max-w-6xl px-6 py-8">
         <div className="mb-8">
           <p className="text-sm text-slate-500">Dashboard</p>
@@ -841,7 +880,6 @@ export default function Home() {
           </h2>
         </div>
 
-        {/* SUMMARY CARDS */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">Total Applications</p>
@@ -864,7 +902,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SEARCH AND FILTER */}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <input
             type="text"
