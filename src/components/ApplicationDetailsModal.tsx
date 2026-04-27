@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Application } from "@/types/application";
 
 type ApplicationStatus = "Applied" | "Interview" | "Offer" | "Rejected";
@@ -38,6 +39,47 @@ function getApplicationHref(jobLink?: string | null) {
   }
 
   return `https://${jobLink}`;
+}
+
+function JobPostingSection({
+  rawJobText,
+}: {
+  rawJobText?: string | null;
+}) {
+  const [isJobPostingOpen, setIsJobPostingOpen] = useState(false);
+  const hasRawJobText = (rawJobText ?? "").trim() !== "";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Job Posting
+        </p>
+
+        {hasRawJobText ? (
+          <button
+            type="button"
+            onClick={() => setIsJobPostingOpen((current) => !current)}
+            className="text-sm font-medium text-slate-700 transition hover:text-slate-900"
+          >
+            {isJobPostingOpen ? "Hide Job Posting" : "View Job Posting"}
+          </button>
+        ) : null}
+      </div>
+
+      {hasRawJobText ? (
+        isJobPostingOpen ? (
+          <div className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700">
+            {rawJobText}
+          </div>
+        ) : null
+      ) : (
+        <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+          No job posting text saved for this application.
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function ApplicationDetailsModal({
@@ -147,6 +189,11 @@ export default function ApplicationDetailsModal({
                   </p>
                 </div>
               ) : null}
+
+              <JobPostingSection
+                key={selectedApplication.id}
+                rawJobText={selectedApplication.raw_job_text}
+              />
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
