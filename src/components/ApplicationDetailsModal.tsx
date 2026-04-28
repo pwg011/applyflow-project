@@ -24,6 +24,11 @@ type PersonaFeedback = {
   tone: "success" | "error";
 };
 
+type AnalysisField = {
+  label: string;
+  value?: string | null;
+};
+
 function formatDate(dateApplied?: string | null) {
   if (!dateApplied) {
     return "Not provided";
@@ -46,6 +51,62 @@ function getApplicationHref(jobLink?: string | null) {
   }
 
   return `https://${jobLink}`;
+}
+
+function hasContent(value?: string | null) {
+  return (value ?? "").trim() !== "";
+}
+
+function AnalysisSection({ application }: { application: Application }) {
+  const analysisFields: AnalysisField[] = [
+    { label: "Location", value: application.job_location },
+    { label: "Deadline", value: application.job_deadline },
+    { label: "Requirements", value: application.job_requirements },
+    {
+      label: "Responsibilities",
+      value: application.job_responsibilities,
+    },
+    { label: "Skills", value: application.job_skills },
+    { label: "Benefits", value: application.job_benefits },
+    {
+      label: "Application Instructions",
+      value: application.application_instructions,
+    },
+  ];
+
+  const populatedFields = analysisFields.filter((field) => hasContent(field.value));
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        Analysis
+      </p>
+
+      {populatedFields.length > 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="space-y-4">
+            {populatedFields.map((field) => (
+              <div
+                key={field.label}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  {field.label}
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  {field.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          No analysis available yet. AI insights will appear here.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function JobPostingSection({ rawJobText }: { rawJobText?: string | null }) {
@@ -382,14 +443,7 @@ export default function ApplicationDetailsModal({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Analysis
-                </p>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-                  No analysis yet. AI insights will appear here.
-                </div>
-              </div>
+              <AnalysisSection application={selectedApplication} />
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">

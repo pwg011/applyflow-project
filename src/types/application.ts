@@ -4,6 +4,15 @@ export type Application = {
   company: string;
   role: string;
   job_url?: string | null;
+  job_location?: string | null;
+  job_deadline?: string | null;
+  job_requirements?: string | null;
+  job_responsibilities?: string | null;
+  job_skills?: string | null;
+  job_benefits?: string | null;
+  application_instructions?: string | null;
+  analysis_status?: string | null;
+  analyzed_at?: string | null;
   status: string;
   date_applied?: string | null;
   notes?: string | null;
