@@ -3,6 +3,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BurgerMenu from "@/components/BurgerMenu";
+import PersonaBuildReviewModal from "@/components/PersonaBuildReviewModal";
 import PersonaDetailsModal from "@/components/PersonaDetailsModal";
 import PersonaForm from "@/components/PersonaForm";
 import PlusActionMenu from "@/components/PlusActionMenu";
@@ -28,6 +29,16 @@ type ToastState = {
 };
 
 const initialFormData: PersonaFormData = {
+  display_name: "",
+  email: "",
+  phone: "",
+  professional_title: "",
+  target_role: "",
+  skills: "",
+  experience_summary: "",
+};
+
+const initialBuildReviewFormData: PersonaFormData = {
   display_name: "",
   email: "",
   phone: "",
@@ -78,8 +89,14 @@ export default function PersonasPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [draftPersonaToBuild, setDraftPersonaToBuild] = useState<Persona | null>(
+    null,
+  );
   const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
+  const [buildReviewFormData, setBuildReviewFormData] =
+    useState<PersonaFormData>(initialBuildReviewFormData);
   const [formError, setFormError] = useState("");
+  const [buildReviewError, setBuildReviewError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
@@ -271,6 +288,7 @@ export default function PersonasPage() {
 
   function openEditForm(persona: Persona) {
     setSelectedPersona(null);
+    setDraftPersonaToBuild(null);
     setEditingPersonaId(persona.id);
     setFormData({
       display_name: persona.display_name,
@@ -286,11 +304,34 @@ export default function PersonasPage() {
   }
 
   function openPersonaDetails(persona: Persona) {
+    if (persona.build_status === "cv_draft") {
+      setSelectedPersona(null);
+      setBuildReviewError("");
+      setBuildReviewFormData({
+        display_name: persona.display_name,
+        email: persona.email,
+        phone: persona.phone ?? "",
+        professional_title: persona.professional_title ?? "",
+        target_role: persona.target_role ?? "",
+        skills: persona.skills ?? "",
+        experience_summary: persona.experience_summary ?? "",
+      });
+      setDraftPersonaToBuild(persona);
+      return;
+    }
+
+    setDraftPersonaToBuild(null);
     setSelectedPersona(persona);
   }
 
   function closePersonaDetails() {
     setSelectedPersona(null);
+  }
+
+  function closeBuildReviewModal() {
+    setDraftPersonaToBuild(null);
+    setBuildReviewFormData(initialBuildReviewFormData);
+    setBuildReviewError("");
   }
 
   function handleInputChange(
@@ -299,6 +340,17 @@ export default function PersonasPage() {
     const { name, value } = event.target;
 
     setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  }
+
+  function handleBuildReviewInputChange(
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
+    const { name, value } = event.target;
+
+    setBuildReviewFormData((current) => ({
       ...current,
       [name]: value,
     }));
@@ -398,8 +450,72 @@ export default function PersonasPage() {
     setSelectedPersona((current) =>
       current?.id === persona.id ? null : current,
     );
+    setDraftPersonaToBuild((current) =>
+      current?.id === persona.id ? null : current,
+    );
     setPersonas((current) => current.filter((item) => item.id !== persona.id));
     showToast("Persona deleted", "success");
+  }
+
+  function handleBuildWithAiPlaceholder() {
+    showToast("CV analysis will be added next.", "success");
+  }
+
+  async function handleBuildReviewSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!user || !draftPersonaToBuild) {
+      setBuildReviewError("You must be logged in to save this persona.");
+      return;
+    }
+
+    if (!buildReviewFormData.display_name.trim()) {
+      setBuildReviewError("Display name is required.");
+      return;
+    }
+
+    setBuildReviewError("");
+    setIsSaving(true);
+
+    const updates = {
+      display_name: buildReviewFormData.display_name.trim(),
+      email: buildReviewFormData.email.trim(),
+      phone: buildReviewFormData.phone.trim() || null,
+      professional_title: buildReviewFormData.professional_title.trim() || null,
+      target_role: buildReviewFormData.target_role.trim() || null,
+      skills: buildReviewFormData.skills.trim() || null,
+      experience_summary: buildReviewFormData.experience_summary.trim() || null,
+      build_status: "complete" as const,
+    };
+
+    const { error } = await supabase
+      .from("personas")
+      .update(updates)
+      .eq("id", draftPersonaToBuild.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      logSupabaseError("complete draft persona", error);
+      setBuildReviewError(
+        error.message || "Something went wrong. Please try again.",
+      );
+      setIsSaving(false);
+      return;
+    }
+
+    setPersonas((current) =>
+      current.map((persona) =>
+        persona.id === draftPersonaToBuild.id
+          ? {
+              ...persona,
+              ...updates,
+            }
+          : persona,
+      ),
+    );
+    showToast("Persona saved", "success");
+    setIsSaving(false);
+    closeBuildReviewModal();
   }
 
   async function handleUploadCv(persona: Persona, file: File) {
@@ -758,6 +874,17 @@ export default function PersonasPage() {
         onDelete={handleDelete}
         onUploadCv={handleUploadCv}
         isUploadingCv={isUploadingCv}
+      />
+
+      <PersonaBuildReviewModal
+        persona={draftPersonaToBuild}
+        formData={buildReviewFormData}
+        isSaving={isSaving}
+        errorMessage={buildReviewError}
+        onClose={closeBuildReviewModal}
+        onChange={handleBuildReviewInputChange}
+        onBuildWithAi={handleBuildWithAiPlaceholder}
+        onSubmit={handleBuildReviewSubmit}
       />
 
       <PersonaForm
