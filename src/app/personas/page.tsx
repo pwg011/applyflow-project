@@ -3,7 +3,6 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BurgerMenu from "@/components/BurgerMenu";
-import PersonaCard from "@/components/PersonaCard";
 import PersonaForm from "@/components/PersonaForm";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
@@ -502,14 +501,44 @@ export default function PersonasPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {personas.map((persona) => (
-              <PersonaCard
+              <article
                 key={persona.id}
-                persona={persona}
-                onEdit={openEditForm}
-                onDelete={handleDelete}
-              />
+                className="flex min-h-[240px] flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+              >
+                <div>
+                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
+                    No CV yet
+                  </div>
+
+                  <div className="mt-5 space-y-2">
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                      {persona.display_name}
+                    </h2>
+                    <p className="text-sm text-slate-600">
+                      {persona.target_role || "Target role not provided"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEditForm(persona)}
+                    className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(persona)}
+                    className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
             ))}
           </div>
         )}
