@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Application } from "@/types/application";
 import type { Persona } from "@/types/persona";
@@ -24,10 +24,40 @@ type PersonaFeedback = {
   tone: "success" | "error";
 };
 
+type AnalysisFeedback = {
+  message: string;
+  tone: "success" | "error";
+};
+
 type AnalysisField = {
   label: string;
   value?: string | null;
 };
+
+type JobAnalysisPayload = {
+  job_location: string | null;
+  job_deadline: string | null;
+  job_requirements: string | null;
+  job_responsibilities: string | null;
+  job_skills: string | null;
+  job_benefits: string | null;
+  application_instructions: string | null;
+};
+
+type JobAnalysisOverrides = Partial<
+  Pick<
+    Application,
+    | "job_location"
+    | "job_deadline"
+    | "job_requirements"
+    | "job_responsibilities"
+    | "job_skills"
+    | "job_benefits"
+    | "application_instructions"
+    | "analysis_status"
+    | "analyzed_at"
+  >
+>;
 
 function formatDate(dateApplied?: string | null) {
   if (!dateApplied) {
@@ -57,7 +87,35 @@ function hasContent(value?: string | null) {
   return (value ?? "").trim() !== "";
 }
 
-function AnalysisSection({ application }: { application: Application }) {
+function isJobAnalysisPayload(value: unknown): value is JobAnalysisPayload {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    ("job_location" in candidate) &&
+    ("job_deadline" in candidate) &&
+    ("job_requirements" in candidate) &&
+    ("job_responsibilities" in candidate) &&
+    ("job_skills" in candidate) &&
+    ("job_benefits" in candidate) &&
+    ("application_instructions" in candidate)
+  );
+}
+
+function AnalysisSection({
+  application,
+  isAnalyzing,
+  analysisFeedback,
+  onAnalyze,
+}: {
+  application: Application;
+  isAnalyzing: boolean;
+  analysisFeedback: AnalysisFeedback | null;
+  onAnalyze: () => void | Promise<void>;
+}) {
   const analysisFields: AnalysisField[] = [
     { label: "Location", value: application.job_location },
     { label: "Deadline", value: application.job_deadline },
@@ -75,12 +133,26 @@ function AnalysisSection({ application }: { application: Application }) {
   ];
 
   const populatedFields = analysisFields.filter((field) => hasContent(field.value));
+  const hasRawJobText = hasContent(application.raw_job_text);
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-        Analysis
-      </p>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Analysis
+        </p>
+
+        {hasRawJobText ? (
+          <button
+            type="button"
+            onClick={() => void onAnalyze()}
+            disabled={isAnalyzing}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isAnalyzing ? "Analyzing..." : "Analyze Job"}
+          </button>
+        ) : null}
+      </div>
 
       {populatedFields.length > 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -105,6 +177,18 @@ function AnalysisSection({ application }: { application: Application }) {
           No analysis available yet. AI insights will appear here.
         </div>
       )}
+
+      {analysisFeedback ? (
+        <p
+          className={`text-sm ${
+            analysisFeedback.tone === "success"
+              ? "text-slate-600"
+              : "text-red-600"
+          }`}
+        >
+          {analysisFeedback.message}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -153,6 +237,8 @@ export default function ApplicationDetailsModal({
   onEdit,
   onDelete,
 }: ApplicationDetailsModalProps) {
+  const [analysisOverridesByApplicationId, setAnalysisOverridesByApplicationId] =
+    useState<Record<string, JobAnalysisOverrides>>({});
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [isPersonasLoading, setIsPersonasLoading] = useState(false);
   const [isSavingPersona, setIsSavingPersona] = useState(false);
@@ -160,15 +246,29 @@ export default function ApplicationDetailsModal({
     useState<Record<string, string>>({});
   const [personaFeedback, setPersonaFeedback] =
     useState<PersonaFeedback | null>(null);
+  const [isAnalyzingJob, setIsAnalyzingJob] = useState(false);
+  const [analysisFeedback, setAnalysisFeedback] =
+    useState<AnalysisFeedback | null>(null);
 
-  const currentPersonaId = selectedApplication
-    ? (personaSelectionByApplicationId[selectedApplication.id] ??
-      selectedApplication.persona_id ??
+  const activeApplication = useMemo(() => {
+    if (!selectedApplication) {
+      return null;
+    }
+
+    return {
+      ...selectedApplication,
+      ...(analysisOverridesByApplicationId[selectedApplication.id] ?? {}),
+    };
+  }, [analysisOverridesByApplicationId, selectedApplication]);
+
+  const currentPersonaId = activeApplication
+    ? (personaSelectionByApplicationId[activeApplication.id] ??
+      activeApplication.persona_id ??
       "")
     : "";
 
   useEffect(() => {
-    if (!selectedApplication) {
+    if (!activeApplication) {
       return;
     }
 
@@ -218,7 +318,7 @@ export default function ApplicationDetailsModal({
     return () => {
       isActive = false;
     };
-  }, [selectedApplication]);
+  }, [activeApplication]);
 
   useEffect(() => {
     if (!personaFeedback) {
@@ -234,8 +334,99 @@ export default function ApplicationDetailsModal({
     };
   }, [personaFeedback]);
 
+  async function handleAnalyzeJob() {
+    if (!activeApplication || !hasContent(activeApplication.raw_job_text)) {
+      return;
+    }
+
+    setIsAnalyzingJob(true);
+    setAnalysisFeedback(null);
+
+    try {
+      const response = await fetch("/api/analyze-job", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          raw_job_text: activeApplication.raw_job_text,
+        }),
+      });
+
+      const responseBody = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof responseBody === "object" &&
+            responseBody !== null &&
+            "error" in responseBody &&
+            typeof responseBody.error === "string"
+            ? responseBody.error
+            : "Could not analyze this job posting.",
+        );
+      }
+
+      if (!isJobAnalysisPayload(responseBody)) {
+        throw new Error("The analysis response was incomplete.");
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        throw new Error("You must be logged in to analyze a job.");
+      }
+
+      const analyzedAt = new Date().toISOString();
+      const updates = {
+        job_location: responseBody.job_location,
+        job_deadline: responseBody.job_deadline,
+        job_requirements: responseBody.job_requirements,
+        job_responsibilities: responseBody.job_responsibilities,
+        job_skills: responseBody.job_skills,
+        job_benefits: responseBody.job_benefits,
+        application_instructions: responseBody.application_instructions,
+        analysis_status: "analyzed",
+        analyzed_at: analyzedAt,
+      };
+
+      const { error } = await supabase
+        .from("applications")
+        .update(updates)
+        .eq("id", activeApplication.id)
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        throw new Error(error.message || "Could not save analysis.");
+      }
+
+      setAnalysisOverridesByApplicationId((current) => ({
+        ...current,
+        [activeApplication.id]: {
+          ...(current[activeApplication.id] ?? {}),
+          ...updates,
+        },
+      }));
+      setAnalysisFeedback({
+        message: "Analysis saved successfully.",
+        tone: "success",
+      });
+    } catch (error) {
+      setAnalysisFeedback({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not analyze this job posting.",
+        tone: "error",
+      });
+    } finally {
+      setIsAnalyzingJob(false);
+    }
+  }
+
   async function handlePersonaChange(personaId: string) {
-    if (!selectedApplication) {
+    if (!activeApplication) {
       return;
     }
 
@@ -258,7 +449,7 @@ export default function ApplicationDetailsModal({
     const { error } = await supabase
       .from("applications")
       .update({ persona_id: nextPersonaId })
-      .eq("id", selectedApplication.id)
+      .eq("id", activeApplication.id)
       .eq("user_id", session.user.id);
 
     if (error) {
@@ -272,7 +463,7 @@ export default function ApplicationDetailsModal({
 
     setPersonaSelectionByApplicationId((current) => ({
       ...current,
-      [selectedApplication.id]: personaId,
+      [activeApplication.id]: personaId,
     }));
     setPersonaFeedback({
       message: personaId ? "Persona linked successfully." : "Persona cleared.",
@@ -299,16 +490,16 @@ export default function ApplicationDetailsModal({
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        {selectedApplication ? (
+        {activeApplication ? (
           <>
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
               <div>
                 <p className="text-sm text-slate-500">Application details</p>
                 <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  {selectedApplication.company}
+                  {activeApplication.company}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  {selectedApplication.role}
+                  {activeApplication.role}
                 </p>
               </div>
 
@@ -329,10 +520,10 @@ export default function ApplicationDetailsModal({
                     Status
                   </p>
                   <select
-                    value={selectedApplication.status}
+                    value={activeApplication.status}
                     onChange={(event) =>
                       onStatusChange(
-                        selectedApplication.id,
+                        activeApplication.id,
                         event.target.value as ApplicationStatus,
                       )
                     }
@@ -350,41 +541,41 @@ export default function ApplicationDetailsModal({
                     Date applied
                   </p>
                   <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {formatDate(selectedApplication.date_applied)}
+                    {formatDate(activeApplication.date_applied)}
                   </p>
                 </div>
               </div>
 
-              {selectedApplication.job_url ? (
+              {activeApplication.job_url ? (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                     Job link
                   </p>
                   <a
-                    href={getApplicationHref(selectedApplication.job_url)}
+                    href={getApplicationHref(activeApplication.job_url)}
                     target="_blank"
                     rel="noreferrer"
                     className="block truncate rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
                   >
-                    {selectedApplication.job_url}
+                    {activeApplication.job_url}
                   </a>
                 </div>
               ) : null}
 
-              {selectedApplication.notes ? (
+              {activeApplication.notes ? (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                     Notes
                   </p>
                   <p className="rounded-2xl bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700">
-                    {selectedApplication.notes}
+                    {activeApplication.notes}
                   </p>
                 </div>
               ) : null}
 
               <JobPostingSection
-                key={selectedApplication.id}
-                rawJobText={selectedApplication.raw_job_text}
+                key={activeApplication.id}
+                rawJobText={activeApplication.raw_job_text}
               />
 
               <div className="space-y-3">
@@ -443,13 +634,18 @@ export default function ApplicationDetailsModal({
                 </div>
               </div>
 
-              <AnalysisSection application={selectedApplication} />
+              <AnalysisSection
+                application={activeApplication}
+                isAnalyzing={isAnalyzingJob}
+                analysisFeedback={analysisFeedback}
+                onAnalyze={handleAnalyzeJob}
+              />
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
               <button
                 type="button"
-                onClick={() => onDelete(selectedApplication)}
+                onClick={() => onDelete(activeApplication)}
                 className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
               >
                 Delete Application
@@ -457,7 +653,7 @@ export default function ApplicationDetailsModal({
 
               <button
                 type="button"
-                onClick={() => onEdit(selectedApplication)}
+                onClick={() => onEdit(activeApplication)}
                 className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
               >
                 Edit Application
