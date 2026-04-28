@@ -3,6 +3,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BurgerMenu from "@/components/BurgerMenu";
+import PersonaDetailsModal from "@/components/PersonaDetailsModal";
 import PersonaForm from "@/components/PersonaForm";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
@@ -63,6 +64,7 @@ export default function PersonasPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -254,6 +256,7 @@ export default function PersonasPage() {
   }
 
   function openEditForm(persona: Persona) {
+    setSelectedPersona(null);
     setEditingPersonaId(persona.id);
     setFormData({
       display_name: persona.display_name,
@@ -266,6 +269,14 @@ export default function PersonasPage() {
     });
     setFormError("");
     setIsFormOpen(true);
+  }
+
+  function openPersonaDetails(persona: Persona) {
+    setSelectedPersona(persona);
+  }
+
+  function closePersonaDetails() {
+    setSelectedPersona(null);
   }
 
   function handleInputChange(
@@ -370,6 +381,9 @@ export default function PersonasPage() {
       return;
     }
 
+    setSelectedPersona((current) =>
+      current?.id === persona.id ? null : current,
+    );
     setPersonas((current) => current.filter((item) => item.id !== persona.id));
     showToast("Persona deleted", "success");
   }
@@ -505,7 +519,8 @@ export default function PersonasPage() {
             {personas.map((persona) => (
               <article
                 key={persona.id}
-                className="flex min-h-[240px] flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                className="flex min-h-[240px] cursor-pointer flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                onClick={() => openPersonaDetails(persona)}
               >
                 <div>
                   <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
@@ -522,27 +537,19 @@ export default function PersonasPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openEditForm(persona)}
-                    className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(persona)}
-                    className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    Delete
-                  </button>
-                </div>
+                <p className="mt-6 text-sm text-slate-400">View details</p>
               </article>
             ))}
           </div>
         )}
       </section>
+
+      <PersonaDetailsModal
+        persona={selectedPersona}
+        onClose={closePersonaDetails}
+        onEdit={openEditForm}
+        onDelete={handleDelete}
+      />
 
       <PersonaForm
         isOpen={isFormOpen}
