@@ -65,6 +65,7 @@ function sanitizeFileName(fileName: string) {
 }
 
 export default function PersonasPage() {
+  const cvDraftInputRef = useRef<HTMLInputElement | null>(null);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const burgerMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -263,9 +264,9 @@ export default function PersonasPage() {
     setIsCreateMenuOpen((current) => !current);
   }
 
-  function handleCvAutoFillComingSoon() {
+  function handleCvAutoFillSelect() {
     setIsCreateMenuOpen(false);
-    showToast("CV auto-fill is coming soon.", "success");
+    cvDraftInputRef.current?.click();
   }
 
   function openEditForm(persona: Persona) {
@@ -473,6 +474,88 @@ export default function PersonasPage() {
     setIsUploadingCv(false);
   }
 
+  async function handleDraftCvFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!user) {
+      showToast("You must be logged in to upload a CV.", "error");
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      showToast("Only PDF files are supported right now.", "error");
+      return;
+    }
+
+    setIsUploadingCv(true);
+
+    const timestamp = Date.now();
+    const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
+    const filePath = `${user.id}/draft-${timestamp}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("persona-cvs")
+      .upload(filePath, file, {
+        upsert: false,
+        contentType: "application/pdf",
+      });
+
+    if (uploadError) {
+      logSupabaseError("upload draft persona CV", uploadError);
+      showToast(uploadError.message || "Could not upload CV.", "error");
+      setIsUploadingCv(false);
+      return;
+    }
+
+    const cvUploadedAt = new Date().toISOString();
+    const draftPayload = {
+      user_id: user.id,
+      display_name: "",
+      email: "",
+      phone: null,
+      professional_title: null,
+      target_role: null,
+      skills: null,
+      experience_summary: null,
+      cv_file_path: filePath,
+      cv_file_name: file.name,
+      cv_uploaded_at: cvUploadedAt,
+      build_status: "cv_draft" as const,
+    };
+
+    const { data, error: insertError } = await supabase
+      .from("personas")
+      .insert(draftPayload)
+      .select("*")
+      .single();
+
+    if (insertError || !data) {
+      if (insertError) {
+        logSupabaseError("create draft persona", insertError);
+      }
+      showToast(
+        insertError?.message || "Could not create draft persona.",
+        "error",
+      );
+      setIsUploadingCv(false);
+      return;
+    }
+
+    setPersonas((current) => [
+      mapRowToPersona(data as Partial<Persona>),
+      ...current,
+    ]);
+    showToast("Draft persona created", "success");
+    setIsUploadingCv(false);
+  }
+
   async function handleLogout() {
     const { error } = await supabase.auth.signOut();
 
@@ -555,7 +638,7 @@ export default function PersonasPage() {
                 isOpen={isCreateMenuOpen}
                 onClose={() => setIsCreateMenuOpen(false)}
                 onAddManual={openCreateForm}
-                onImport={handleCvAutoFillComingSoon}
+                onImport={handleCvAutoFillSelect}
                 addManualLabel="Create manually"
                 importLabel="Use CV to auto-fill"
               />
@@ -659,6 +742,14 @@ export default function PersonasPage() {
           </div>
         )}
       </section>
+
+      <input
+        ref={cvDraftInputRef}
+        type="file"
+        accept="application/pdf"
+        className="sr-only"
+        onChange={handleDraftCvFileChange}
+      />
 
       <PersonaDetailsModal
         persona={selectedPersona}
