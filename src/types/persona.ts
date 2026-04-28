@@ -1,3 +1,5 @@
+export type PersonaBuildStatus = "manual" | "cv_draft" | "complete";
+
 export type Persona = {
   id: string;
   user_id: string | null;
@@ -11,5 +13,6 @@ export type Persona = {
   cv_file_path: string | null;
   cv_file_name: string | null;
   cv_uploaded_at: string | null;
+  build_status: PersonaBuildStatus;
   created_at: string | null;
 };

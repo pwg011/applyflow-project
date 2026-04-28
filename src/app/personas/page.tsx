@@ -51,6 +51,7 @@ function mapRowToPersona(row: Partial<Persona>): Persona {
     cv_file_path: row.cv_file_path ?? null,
     cv_file_name: row.cv_file_name ?? null,
     cv_uploaded_at: row.cv_uploaded_at ?? null,
+    build_status: row.build_status ?? "manual",
     created_at: row.created_at ?? null,
   };
 }
@@ -603,25 +604,56 @@ export default function PersonasPage() {
             {personas.map((persona) => (
               <article
                 key={persona.id}
-                className="flex min-h-[240px] cursor-pointer flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+                className={`flex min-h-[240px] cursor-pointer flex-col justify-between rounded-3xl p-5 shadow-sm transition ${
+                  persona.build_status === "cv_draft"
+                    ? "border border-slate-900 bg-slate-900 text-white hover:bg-slate-800"
+                    : "border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+                }`}
                 onClick={() => openPersonaDetails(persona)}
               >
                 <div>
-                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
-                    {persona.cv_file_path ? "CV attached" : "No CV yet"}
-                  </div>
+                  {persona.build_status === "cv_draft" ? (
+                    <>
+                      <div className="inline-flex rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-200">
+                        CV attached
+                      </div>
 
-                  <div className="mt-5 space-y-2">
-                    <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                      {persona.display_name}
-                    </h2>
-                    <p className="text-sm text-slate-600">
-                      {persona.target_role || "Target role not provided"}
-                    </p>
-                  </div>
+                      <div className="mt-5 space-y-2">
+                        <h2 className="text-xl font-semibold tracking-tight text-white">
+                          Build from CV
+                        </h2>
+                        <p className="text-sm text-slate-300">
+                          Click to create persona
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
+                        {persona.cv_file_path ? "CV attached" : "No CV yet"}
+                      </div>
+
+                      <div className="mt-5 space-y-2">
+                        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                          {persona.display_name}
+                        </h2>
+                        <p className="text-sm text-slate-600">
+                          {persona.target_role || "Target role not provided"}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <p className="mt-6 text-sm text-slate-400">View details</p>
+                <p
+                  className={`mt-6 text-sm ${
+                    persona.build_status === "cv_draft"
+                      ? "text-slate-300"
+                      : "text-slate-400"
+                  }`}
+                >
+                  View details
+                </p>
               </article>
             ))}
           </div>
