@@ -97,14 +97,13 @@ export default function ApplicationDetailsModal({
   const [isSavingPersona, setIsSavingPersona] = useState(false);
   const [personaSelectionByApplicationId, setPersonaSelectionByApplicationId] =
     useState<Record<string, string>>({});
-  const [personaFeedback, setPersonaFeedback] = useState<PersonaFeedback | null>(
-    null,
-  );
+  const [personaFeedback, setPersonaFeedback] =
+    useState<PersonaFeedback | null>(null);
 
   const currentPersonaId = selectedApplication
-    ? personaSelectionByApplicationId[selectedApplication.id] ??
+    ? (personaSelectionByApplicationId[selectedApplication.id] ??
       selectedApplication.persona_id ??
-      ""
+      "")
     : "";
 
   useEffect(() => {
@@ -375,7 +374,8 @@ export default function ApplicationDetailsModal({
                       </p>
                     ) : (
                       <p className="text-slate-500">
-                        Choose a persona to tailor future AI workflows for this application.
+                        Choose a persona to tailor future AI workflows for this
+                        application.
                       </p>
                     )}
                   </div>
