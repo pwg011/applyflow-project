@@ -5,6 +5,8 @@ type PlusActionMenuProps = {
   onClose: () => void;
   onAddManual: () => void;
   onImport: () => void;
+  addManualLabel?: string;
+  importLabel?: string;
 };
 
 export default function PlusActionMenu({
@@ -12,6 +14,8 @@ export default function PlusActionMenu({
   onClose,
   onAddManual,
   onImport,
+  addManualLabel = "Add manually",
+  importLabel = "Import job",
 }: PlusActionMenuProps) {
   void onClose;
 
@@ -29,7 +33,7 @@ export default function PlusActionMenu({
         onClick={onAddManual}
         className="w-full rounded-xl bg-slate-900 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:bg-slate-800 hover:shadow-sm"
       >
-        Add manually
+        {addManualLabel}
       </button>
 
       <button
@@ -37,7 +41,7 @@ export default function PlusActionMenu({
         onClick={onImport}
         className="mt-2 w-full rounded-xl bg-slate-900 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:bg-slate-800 hover:shadow-sm"
       >
-        Import job
+        {importLabel}
       </button>
     </div>
   );

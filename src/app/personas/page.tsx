@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BurgerMenu from "@/components/BurgerMenu";
 import PersonaCard from "@/components/PersonaCard";
 import PersonaForm from "@/components/PersonaForm";
+import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
@@ -52,6 +53,7 @@ function mapRowToPersona(row: Partial<Persona>): Persona {
 }
 
 export default function PersonasPage() {
+  const createMenuRef = useRef<HTMLDivElement | null>(null);
   const burgerMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
@@ -65,6 +67,7 @@ export default function PersonasPage() {
   const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -162,6 +165,28 @@ export default function PersonasPage() {
   }, [toast]);
 
   useEffect(() => {
+    if (!isCreateMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!createMenuRef.current) {
+        return;
+      }
+
+      if (!createMenuRef.current.contains(event.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isCreateMenuOpen]);
+
+  useEffect(() => {
     if (!isBurgerMenuOpen) {
       return;
     }
@@ -213,10 +238,20 @@ export default function PersonasPage() {
   }
 
   function openCreateForm() {
+    setIsCreateMenuOpen(false);
     setEditingPersonaId(null);
     setFormData(initialFormData);
     setFormError("");
     setIsFormOpen(true);
+  }
+
+  function handleOpenCreateMenu() {
+    setIsCreateMenuOpen((current) => !current);
+  }
+
+  function handleCvAutoFillComingSoon() {
+    setIsCreateMenuOpen(false);
+    showToast("CV auto-fill is coming soon.", "success");
   }
 
   function openEditForm(persona: Persona) {
@@ -406,16 +441,27 @@ export default function PersonasPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={openCreateForm}
-              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              <span aria-hidden="true" className="text-base leading-none">
-                +
-              </span>
-              Create Persona
-            </button>
+            <div ref={createMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={handleOpenCreateMenu}
+                className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                <span aria-hidden="true" className="text-base leading-none">
+                  +
+                </span>
+                Create Persona
+              </button>
+
+              <PlusActionMenu
+                isOpen={isCreateMenuOpen}
+                onClose={() => setIsCreateMenuOpen(false)}
+                onAddManual={openCreateForm}
+                onImport={handleCvAutoFillComingSoon}
+                addManualLabel="Create manually"
+                importLabel="Use CV to auto-fill"
+              />
+            </div>
 
             <div ref={profileMenuRef} className="relative">
               <button

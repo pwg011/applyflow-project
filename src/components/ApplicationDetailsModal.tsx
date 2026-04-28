@@ -59,6 +59,19 @@ type JobAnalysisOverrides = Partial<
   >
 >;
 
+type PersistedAnalysisFields = Pick<
+  Application,
+  | "job_location"
+  | "job_deadline"
+  | "job_requirements"
+  | "job_responsibilities"
+  | "job_skills"
+  | "job_benefits"
+  | "application_instructions"
+  | "analysis_status"
+  | "analyzed_at"
+>;
+
 function formatDate(dateApplied?: string | null) {
   if (!dateApplied) {
     return "Not provided";
@@ -105,6 +118,40 @@ function isJobAnalysisPayload(value: unknown): value is JobAnalysisPayload {
   );
 }
 
+function mapAnalysisRow(
+  row: Partial<PersistedAnalysisFields> | null | undefined,
+): JobAnalysisOverrides {
+  return {
+    job_location: row?.job_location ?? null,
+    job_deadline: row?.job_deadline ?? null,
+    job_requirements: row?.job_requirements ?? null,
+    job_responsibilities: row?.job_responsibilities ?? null,
+    job_skills: row?.job_skills ?? null,
+    job_benefits: row?.job_benefits ?? null,
+    application_instructions: row?.application_instructions ?? null,
+    analysis_status: row?.analysis_status ?? null,
+    analyzed_at: row?.analyzed_at ?? null,
+  };
+}
+
+function getExistingAnalysis(application: Application): JobAnalysisPayload {
+  return {
+    job_location: application.job_location ?? null,
+    job_deadline: application.job_deadline ?? null,
+    job_requirements: application.job_requirements ?? null,
+    job_responsibilities: application.job_responsibilities ?? null,
+    job_skills: application.job_skills ?? null,
+    job_benefits: application.job_benefits ?? null,
+    application_instructions: application.application_instructions ?? null,
+  };
+}
+
+function hasSavedAnalysis(application: Application) {
+  return Object.values(getExistingAnalysis(application)).some(
+    (value) => hasContent(value),
+  );
+}
+
 function AnalysisSection({
   application,
   isAnalyzing,
@@ -134,6 +181,7 @@ function AnalysisSection({
 
   const populatedFields = analysisFields.filter((field) => hasContent(field.value));
   const hasRawJobText = hasContent(application.raw_job_text);
+  const hasAnalysis = hasSavedAnalysis(application);
 
   return (
     <div className="space-y-3">
@@ -149,7 +197,13 @@ function AnalysisSection({
             disabled={isAnalyzing}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isAnalyzing ? "Analyzing..." : "Analyze Job"}
+            {isAnalyzing
+              ? hasAnalysis
+                ? "Improving..."
+                : "Analyzing..."
+              : hasAnalysis
+                ? "Improve Analysis"
+                : "Analyze Job"}
           </button>
         ) : null}
       </div>
@@ -177,6 +231,12 @@ function AnalysisSection({
           No analysis available yet. AI insights will appear here.
         </div>
       )}
+
+      {hasAnalysis ? (
+        <p className="text-sm text-slate-500">
+          Analysis saved. You can improve it if more useful details are needed.
+        </p>
+      ) : null}
 
       {analysisFeedback ? (
         <p
@@ -334,9 +394,77 @@ export default function ApplicationDetailsModal({
     };
   }, [personaFeedback]);
 
+  useEffect(() => {
+    if (!selectedApplication) {
+      return;
+    }
+
+    let isActive = true;
+    const applicationId = selectedApplication.id;
+
+    async function loadPersistedAnalysis() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("applications")
+        .select(
+          [
+            "job_location",
+            "job_deadline",
+            "job_requirements",
+            "job_responsibilities",
+            "job_skills",
+            "job_benefits",
+            "application_instructions",
+            "analysis_status",
+            "analyzed_at",
+          ].join(","),
+        )
+        .eq("id", applicationId)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (!isActive || error || !data) {
+        return;
+      }
+
+      setAnalysisOverridesByApplicationId((current) => ({
+        ...current,
+        [applicationId]: {
+          ...(current[applicationId] ?? {}),
+          ...mapAnalysisRow(data as Partial<PersistedAnalysisFields>),
+        },
+      }));
+    }
+
+    void loadPersistedAnalysis();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedApplication]);
+
   async function handleAnalyzeJob() {
     if (!activeApplication || !hasContent(activeApplication.raw_job_text)) {
       return;
+    }
+
+    const shouldImproveExistingAnalysis = hasSavedAnalysis(activeApplication);
+
+    if (shouldImproveExistingAnalysis) {
+      const shouldContinue = window.confirm(
+        "This will improve the saved analysis using the original job post and existing analysis. Continue?",
+      );
+
+      if (!shouldContinue) {
+        return;
+      }
     }
 
     setIsAnalyzingJob(true);
@@ -348,9 +476,16 @@ export default function ApplicationDetailsModal({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          raw_job_text: activeApplication.raw_job_text,
-        }),
+        body: JSON.stringify(
+          shouldImproveExistingAnalysis
+            ? {
+                raw_job_text: activeApplication.raw_job_text,
+                existing_analysis: getExistingAnalysis(activeApplication),
+              }
+            : {
+                raw_job_text: activeApplication.raw_job_text,
+              },
+        ),
       });
 
       const responseBody = (await response.json()) as unknown;
@@ -391,9 +526,22 @@ export default function ApplicationDetailsModal({
         analyzed_at: analyzedAt,
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("applications")
         .update(updates)
+        .select(
+          [
+            "job_location",
+            "job_deadline",
+            "job_requirements",
+            "job_responsibilities",
+            "job_skills",
+            "job_benefits",
+            "application_instructions",
+            "analysis_status",
+            "analyzed_at",
+          ].join(","),
+        )
         .eq("id", activeApplication.id)
         .eq("user_id", session.user.id);
 
@@ -401,15 +549,23 @@ export default function ApplicationDetailsModal({
         throw new Error(error.message || "Could not save analysis.");
       }
 
+      const savedAnalysis = Array.isArray(data) ? data[0] : data;
+
+      if (!savedAnalysis) {
+        throw new Error("Could not save analysis.");
+      }
+
       setAnalysisOverridesByApplicationId((current) => ({
         ...current,
         [activeApplication.id]: {
           ...(current[activeApplication.id] ?? {}),
-          ...updates,
+          ...mapAnalysisRow(savedAnalysis as Partial<PersistedAnalysisFields>),
         },
       }));
       setAnalysisFeedback({
-        message: "Analysis saved successfully.",
+        message: shouldImproveExistingAnalysis
+          ? "Analysis improved successfully."
+          : "Analysis saved successfully.",
         tone: "success",
       });
     } catch (error) {
