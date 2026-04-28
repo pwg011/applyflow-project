@@ -7,6 +7,8 @@ type PersonaDetailsModalProps = {
   onClose: () => void;
   onEdit: (persona: Persona) => void;
   onDelete: (persona: Persona) => void;
+  onUploadCv: (persona: Persona, file: File) => void | Promise<void>;
+  isUploadingCv: boolean;
 };
 
 type DetailRowProps = {
@@ -37,6 +39,8 @@ export default function PersonaDetailsModal({
   onClose,
   onEdit,
   onDelete,
+  onUploadCv,
+  isUploadingCv,
 }: PersonaDetailsModalProps) {
   return (
     <div
@@ -92,7 +96,36 @@ export default function PersonaDetailsModal({
                     CV
                   </p>
                   <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-700">
-                    No CV uploaded yet
+                    <p>
+                      {persona.cv_file_path
+                        ? persona.cv_file_name || "CV attached"
+                        : "No CV uploaded yet"}
+                    </p>
+                    <label className="mt-4 inline-flex cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="sr-only"
+                        disabled={isUploadingCv}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+
+                          if (!file) {
+                            return;
+                          }
+
+                          void onUploadCv(persona, file);
+                          event.target.value = "";
+                        }}
+                      />
+                      {isUploadingCv
+                        ? persona.cv_file_path
+                          ? "Replacing..."
+                          : "Uploading..."
+                        : persona.cv_file_path
+                          ? "Replace CV"
+                          : "Upload CV"}
+                    </label>
                   </div>
                 </div>
               </div>

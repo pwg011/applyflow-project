@@ -8,5 +8,8 @@ export type Persona = {
   target_role: string | null;
   skills: string | null;
   experience_summary: string | null;
+  cv_file_path: string | null;
+  cv_file_name: string | null;
+  cv_uploaded_at: string | null;
   created_at: string | null;
 };

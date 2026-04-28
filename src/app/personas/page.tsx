@@ -48,8 +48,19 @@ function mapRowToPersona(row: Partial<Persona>): Persona {
     target_role: row.target_role ?? null,
     skills: row.skills ?? null,
     experience_summary: row.experience_summary ?? null,
+    cv_file_path: row.cv_file_path ?? null,
+    cv_file_name: row.cv_file_name ?? null,
+    cv_uploaded_at: row.cv_uploaded_at ?? null,
     created_at: row.created_at ?? null,
   };
+}
+
+function sanitizeFileName(fileName: string) {
+  return fileName
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._-]/g, "")
+    .replace(/-+/g, "-");
 }
 
 export default function PersonasPage() {
@@ -69,6 +80,7 @@ export default function PersonasPage() {
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
   const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -388,6 +400,78 @@ export default function PersonasPage() {
     showToast("Persona deleted", "success");
   }
 
+  async function handleUploadCv(persona: Persona, file: File) {
+    if (!user) {
+      showToast("You must be logged in to upload a CV.", "error");
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      showToast("Only PDF files are supported right now.", "error");
+      return;
+    }
+
+    setIsUploadingCv(true);
+
+    const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
+    const filePath = `${user.id}/${persona.id}/${Date.now()}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("persona-cvs")
+      .upload(filePath, file, {
+        upsert: false,
+        contentType: "application/pdf",
+      });
+
+    if (uploadError) {
+      logSupabaseError("upload persona CV", uploadError);
+      showToast(uploadError.message || "Could not upload CV.", "error");
+      setIsUploadingCv(false);
+      return;
+    }
+
+    const cvUploadedAt = new Date().toISOString();
+    const updates = {
+      cv_file_path: filePath,
+      cv_file_name: file.name,
+      cv_uploaded_at: cvUploadedAt,
+    };
+
+    const { error: updateError } = await supabase
+      .from("personas")
+      .update(updates)
+      .eq("id", persona.id)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      logSupabaseError("save persona CV reference", updateError);
+      showToast(updateError.message || "Could not save CV reference.", "error");
+      setIsUploadingCv(false);
+      return;
+    }
+
+    setPersonas((current) =>
+      current.map((item) =>
+        item.id === persona.id
+          ? {
+              ...item,
+              ...updates,
+            }
+          : item,
+      ),
+    );
+    setSelectedPersona((current) =>
+      current?.id === persona.id
+        ? {
+            ...current,
+            ...updates,
+          }
+        : current,
+    );
+    showToast(persona.cv_file_path ? "CV replaced" : "CV uploaded", "success");
+    setIsUploadingCv(false);
+  }
+
   async function handleLogout() {
     const { error } = await supabase.auth.signOut();
 
@@ -524,7 +608,7 @@ export default function PersonasPage() {
               >
                 <div>
                   <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
-                    No CV yet
+                    {persona.cv_file_path ? "CV attached" : "No CV yet"}
                   </div>
 
                   <div className="mt-5 space-y-2">
@@ -549,6 +633,8 @@ export default function PersonasPage() {
         onClose={closePersonaDetails}
         onEdit={openEditForm}
         onDelete={handleDelete}
+        onUploadCv={handleUploadCv}
+        isUploadingCv={isUploadingCv}
       />
 
       <PersonaForm
