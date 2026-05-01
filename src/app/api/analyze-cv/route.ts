@@ -225,6 +225,7 @@ export async function POST(request: Request) {
       const extractionResult = await extractCvTextFromFile({
         buffer: cvBuffer,
         fileName: persona.cv_file_name || cvFilePath,
+        filePath: persona.cv_file_path || cvFilePath,
         contentType: cvBlob.type || "",
       });
 
@@ -324,7 +325,10 @@ export async function POST(request: Request) {
       choiceCount: response.choices?.length ?? 0,
     });
 
-    const responseText = response.choices[0]?.message?.content ?? "";
+    const firstChoice = Array.isArray(response.choices)
+      ? response.choices[0]
+      : undefined;
+    const responseText = firstChoice?.message?.content ?? "";
 
     if (!responseText) {
       console.info("[analyze-cv] OpenRouter response status:", "empty-content");

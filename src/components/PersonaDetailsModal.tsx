@@ -104,7 +104,7 @@ export default function PersonaDetailsModal({
                     <label className="mt-4 inline-flex cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
                       <input
                         type="file"
-                        accept="application/pdf"
+                        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         className="sr-only"
                         disabled={isUploadingCv}
                         onChange={(event) => {

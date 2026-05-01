@@ -108,13 +108,13 @@ function isJobAnalysisPayload(value: unknown): value is JobAnalysisPayload {
   const candidate = value as Record<string, unknown>;
 
   return (
-    ("job_location" in candidate) &&
-    ("job_deadline" in candidate) &&
-    ("job_requirements" in candidate) &&
-    ("job_responsibilities" in candidate) &&
-    ("job_skills" in candidate) &&
-    ("job_benefits" in candidate) &&
-    ("application_instructions" in candidate)
+    "job_location" in candidate &&
+    "job_deadline" in candidate &&
+    "job_requirements" in candidate &&
+    "job_responsibilities" in candidate &&
+    "job_skills" in candidate &&
+    "job_benefits" in candidate &&
+    "application_instructions" in candidate
   );
 }
 
@@ -147,8 +147,8 @@ function getExistingAnalysis(application: Application): JobAnalysisPayload {
 }
 
 function hasSavedAnalysis(application: Application) {
-  return Object.values(getExistingAnalysis(application)).some(
-    (value) => hasContent(value),
+  return Object.values(getExistingAnalysis(application)).some((value) =>
+    hasContent(value),
   );
 }
 
@@ -179,7 +179,9 @@ function AnalysisSection({
     },
   ];
 
-  const populatedFields = analysisFields.filter((field) => hasContent(field.value));
+  const populatedFields = analysisFields.filter((field) =>
+    hasContent(field.value),
+  );
   const hasRawJobText = hasContent(application.raw_job_text);
   const hasAnalysis = hasSavedAnalysis(application);
 
@@ -297,8 +299,10 @@ export default function ApplicationDetailsModal({
   onEdit,
   onDelete,
 }: ApplicationDetailsModalProps) {
-  const [analysisOverridesByApplicationId, setAnalysisOverridesByApplicationId] =
-    useState<Record<string, JobAnalysisOverrides>>({});
+  const [
+    analysisOverridesByApplicationId,
+    setAnalysisOverridesByApplicationId,
+  ] = useState<Record<string, JobAnalysisOverrides>>({});
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [isPersonasLoading, setIsPersonasLoading] = useState(false);
   const [isSavingPersona, setIsSavingPersona] = useState(false);

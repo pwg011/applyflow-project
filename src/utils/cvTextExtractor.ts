@@ -2,6 +2,8 @@ import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
 
 const weakPdfReason = "PDF text extraction was weak. Client OCR required.";
+const weakDocxReason =
+  "We could not find enough readable CV text in this DOCX file.";
 const cvSignalPatterns = [
   /\bexperience\b/i,
   /\beducation\b/i,
@@ -71,16 +73,44 @@ function getFileExtension(fileName: string) {
   return extensionMatch?.[1] ?? "";
 }
 
-function isPdfFile(fileName: string, contentType: string) {
-  return contentType === "application/pdf" || getFileExtension(fileName) === "pdf";
+function normalizeContentType(contentType: string) {
+  return contentType.toLowerCase().split(";")[0]?.trim() ?? "";
 }
 
-function isDocxFile(fileName: string, contentType: string) {
-  return (
-    contentType ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    getFileExtension(fileName) === "docx"
-  );
+function getFileType({
+  fileName,
+  filePath,
+  contentType,
+}: {
+  fileName: string;
+  filePath: string;
+  contentType: string;
+}) {
+  const pathExtension = getFileExtension(filePath);
+  const nameExtension = getFileExtension(fileName);
+  const preferredExtension = pathExtension || nameExtension;
+  const normalizedContentType = normalizeContentType(contentType);
+
+  if (preferredExtension === "docx") {
+    return "docx";
+  }
+
+  if (preferredExtension === "pdf") {
+    return "pdf";
+  }
+
+  if (
+    normalizedContentType ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    return "docx";
+  }
+
+  if (normalizedContentType === "application/pdf") {
+    return "pdf";
+  }
+
+  return "unsupported";
 }
 
 export async function extractCvTextFromPdf(pdfBuffer: Buffer) {
@@ -138,6 +168,13 @@ export async function extractCvTextFromDocx(docxBuffer: Buffer) {
       } satisfies ExtractCvTextFailure;
     }
 
+    if (quality.normalized.length < 120 || quality.signalCount === 0) {
+      return {
+        status: "no_text_found",
+        error: weakDocxReason,
+      } satisfies ExtractCvTextFailure;
+    }
+
     return {
       status: "success",
       text: quality.normalized,
@@ -158,17 +195,23 @@ export async function extractCvTextFromDocx(docxBuffer: Buffer) {
 export async function extractCvTextFromFile({
   buffer,
   fileName,
+  filePath = "",
   contentType,
 }: {
   buffer: Buffer;
   fileName: string;
+  filePath?: string;
   contentType: string;
 }) {
-  if (isPdfFile(fileName, contentType)) {
+  const fileType = getFileType({ fileName, filePath, contentType });
+
+  console.info("[analyze-cv] detected CV file type:", fileType);
+
+  if (fileType === "pdf") {
     return extractCvTextFromPdf(buffer);
   }
 
-  if (isDocxFile(fileName, contentType)) {
+  if (fileType === "docx") {
     return extractCvTextFromDocx(buffer);
   }
 

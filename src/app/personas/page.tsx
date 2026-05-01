@@ -102,6 +102,22 @@ function isSupportedCvFile(file: File) {
   );
 }
 
+function getCvContentType(file: File) {
+  let contentType = file.type;
+  const fileName = file.name.toLowerCase();
+
+  if (!contentType) {
+    if (fileName.endsWith(".pdf")) {
+      contentType = "application/pdf";
+    } else if (fileName.endsWith(".docx")) {
+      contentType =
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    }
+  }
+
+  return contentType;
+}
+
 async function verifyUploadedCvSize(path: string, expectedSize: number) {
   const { data, error } = await supabase.storage.from("persona-cvs").download(path);
 
@@ -700,6 +716,7 @@ export default function PersonasPage() {
 
     const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
     const filePath = `${user.id}/${persona.id}/${Date.now()}-${safeFileName}`;
+    const contentType = getCvContentType(file);
 
     console.log("Uploading CV file:", {
       name: file.name,
@@ -712,7 +729,7 @@ export default function PersonasPage() {
       .from("persona-cvs")
       .upload(filePath, file, {
         upsert: false,
-        contentType: "application/pdf",
+        contentType,
       });
 
     if (uploadError) {
@@ -802,6 +819,7 @@ export default function PersonasPage() {
     const timestamp = Date.now();
     const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
     const filePath = `${user.id}/draft-${timestamp}-${safeFileName}`;
+    const contentType = getCvContentType(file);
 
     console.log("Uploading draft CV file:", {
       name: file.name,
@@ -814,7 +832,7 @@ export default function PersonasPage() {
       .from("persona-cvs")
       .upload(filePath, file, {
         upsert: false,
-        contentType: "application/pdf",
+        contentType,
       });
 
     if (uploadError) {
