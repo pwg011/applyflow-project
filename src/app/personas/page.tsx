@@ -28,6 +28,21 @@ type ToastState = {
   tone: "success" | "error";
 };
 
+type PersonaCvAnalysisResponse = {
+  display_name: string;
+  email: string;
+  phone: string;
+  professional_title: string;
+  target_role: string;
+  skills: string;
+  experience_summary: string;
+};
+
+type NeedsClientOcrResponse = {
+  needsClientOcr: true;
+  reason: string;
+};
+
 const initialFormData: PersonaFormData = {
   display_name: "",
   email: "",
@@ -75,6 +90,71 @@ function sanitizeFileName(fileName: string) {
     .replace(/-+/g, "-");
 }
 
+function isSupportedCvFile(file: File) {
+  const fileName = file.name.toLowerCase();
+
+  return (
+    file.type === "application/pdf" ||
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    fileName.endsWith(".pdf") ||
+    fileName.endsWith(".docx")
+  );
+}
+
+async function verifyUploadedCvSize(path: string, expectedSize: number) {
+  const { data, error } = await supabase.storage.from("persona-cvs").download(path);
+
+  if (error || !data) {
+    throw new Error(error?.message || "Could not verify the uploaded CV file.");
+  }
+
+  const storedSize = data.size;
+  const allowedDifference = Math.max(2048, Math.round(expectedSize * 0.05));
+
+  console.log("Uploaded CV verification:", {
+    path,
+    expectedSize,
+    storedSize,
+  });
+
+  if (Math.abs(storedSize - expectedSize) > allowedDifference) {
+    throw new Error("The uploaded CV file appears incomplete or invalid.");
+  }
+}
+
+function isPersonaCvAnalysisResponse(
+  value: unknown,
+): value is PersonaCvAnalysisResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.display_name === "string" &&
+    typeof candidate.email === "string" &&
+    typeof candidate.phone === "string" &&
+    typeof candidate.professional_title === "string" &&
+    typeof candidate.target_role === "string" &&
+    typeof candidate.skills === "string" &&
+    typeof candidate.experience_summary === "string"
+  );
+}
+
+function isNeedsClientOcrResponse(value: unknown): value is NeedsClientOcrResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    candidate.needsClientOcr === true && typeof candidate.reason === "string"
+  );
+}
+
 export default function PersonasPage() {
   const cvDraftInputRef = useRef<HTMLInputElement | null>(null);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +180,7 @@ export default function PersonasPage() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [isAnalyzingCv, setIsAnalyzingCv] = useState(false);
   const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -457,8 +538,94 @@ export default function PersonasPage() {
     showToast("Persona deleted", "success");
   }
 
-  function handleBuildWithAiPlaceholder() {
-    showToast("CV analysis will be added next.", "success");
+  async function handleBuildWithAi() {
+    if (!draftPersonaToBuild) {
+      setBuildReviewError("No draft persona is available to analyze.");
+      return;
+    }
+
+    if (!draftPersonaToBuild.cv_file_path) {
+      setBuildReviewError("No CV is attached to this draft persona.");
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      setBuildReviewError("You must be logged in to analyze this CV.");
+      return;
+    }
+
+    setBuildReviewError("");
+    setIsAnalyzingCv(true);
+
+    try {
+      console.log("Analyze CV request:", {
+        persona_id: draftPersonaToBuild.id,
+        cv_file_path: draftPersonaToBuild.cv_file_path,
+        cv_file_name: draftPersonaToBuild.cv_file_name,
+      });
+
+      const response = await fetch("/api/analyze-cv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          persona_id: draftPersonaToBuild.id,
+          cv_file_path: draftPersonaToBuild.cv_file_path,
+        }),
+      });
+
+      const responseBody = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof responseBody === "object" &&
+            responseBody !== null &&
+            "error" in responseBody &&
+            typeof responseBody.error === "string"
+            ? responseBody.error
+            : "Could not analyze this CV.",
+        );
+      }
+
+      if (isNeedsClientOcrResponse(responseBody)) {
+        setBuildReviewError(
+          `${responseBody.reason} This PDF needs browser scanning before AI can build the persona.`,
+        );
+        showToast("This PDF needs browser scanning before AI analysis.", "error");
+        return;
+      }
+
+      if (!isPersonaCvAnalysisResponse(responseBody)) {
+        throw new Error("The CV analysis response was incomplete.");
+      }
+
+      console.log("Analyze CV response:", responseBody);
+
+      setBuildReviewFormData({
+        display_name: responseBody.display_name ?? "",
+        email: responseBody.email ?? "",
+        phone: responseBody.phone ?? "",
+        professional_title: responseBody.professional_title ?? "",
+        target_role: responseBody.target_role ?? "",
+        skills: responseBody.skills ?? "",
+        experience_summary: responseBody.experience_summary ?? "",
+      });
+      showToast("CV analysis completed. Review the fields before saving.", "success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not analyze this CV.";
+      console.log("Analyze CV response:", { error: message });
+      setBuildReviewError(message);
+      showToast(message, "error");
+    } finally {
+      setIsAnalyzingCv(false);
+    }
   }
 
   async function handleBuildReviewSubmit(event: FormEvent<HTMLFormElement>) {
@@ -524,8 +691,8 @@ export default function PersonasPage() {
       return;
     }
 
-    if (file.type !== "application/pdf") {
-      showToast("Only PDF files are supported right now.", "error");
+    if (!isSupportedCvFile(file)) {
+      showToast("Only PDF or DOCX files are supported.", "error");
       return;
     }
 
@@ -533,6 +700,13 @@ export default function PersonasPage() {
 
     const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
     const filePath = `${user.id}/${persona.id}/${Date.now()}-${safeFileName}`;
+
+    console.log("Uploading CV file:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      path: filePath,
+    });
 
     const { error: uploadError } = await supabase.storage
       .from("persona-cvs")
@@ -544,6 +718,19 @@ export default function PersonasPage() {
     if (uploadError) {
       logSupabaseError("upload persona CV", uploadError);
       showToast(uploadError.message || "Could not upload CV.", "error");
+      setIsUploadingCv(false);
+      return;
+    }
+
+    try {
+      await verifyUploadedCvSize(filePath, file.size);
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "The uploaded CV file appears incomplete or invalid.",
+        "error",
+      );
       setIsUploadingCv(false);
       return;
     }
@@ -593,7 +780,7 @@ export default function PersonasPage() {
   async function handleDraftCvFileChange(
     event: ChangeEvent<HTMLInputElement>,
   ) {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0] ?? event.target.files?.item(0) ?? null;
     event.target.value = "";
 
     if (!file) {
@@ -605,8 +792,8 @@ export default function PersonasPage() {
       return;
     }
 
-    if (file.type !== "application/pdf") {
-      showToast("Only PDF files are supported right now.", "error");
+    if (!isSupportedCvFile(file)) {
+      showToast("Only PDF or DOCX files are supported.", "error");
       return;
     }
 
@@ -615,6 +802,13 @@ export default function PersonasPage() {
     const timestamp = Date.now();
     const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
     const filePath = `${user.id}/draft-${timestamp}-${safeFileName}`;
+
+    console.log("Uploading draft CV file:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      path: filePath,
+    });
 
     const { error: uploadError } = await supabase.storage
       .from("persona-cvs")
@@ -626,6 +820,19 @@ export default function PersonasPage() {
     if (uploadError) {
       logSupabaseError("upload draft persona CV", uploadError);
       showToast(uploadError.message || "Could not upload CV.", "error");
+      setIsUploadingCv(false);
+      return;
+    }
+
+    try {
+      await verifyUploadedCvSize(filePath, file.size);
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "The uploaded CV file appears incomplete or invalid.",
+        "error",
+      );
       setIsUploadingCv(false);
       return;
     }
@@ -862,7 +1069,7 @@ export default function PersonasPage() {
       <input
         ref={cvDraftInputRef}
         type="file"
-        accept="application/pdf"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         className="sr-only"
         onChange={handleDraftCvFileChange}
       />
@@ -880,10 +1087,11 @@ export default function PersonasPage() {
         persona={draftPersonaToBuild}
         formData={buildReviewFormData}
         isSaving={isSaving}
+        isAnalyzing={isAnalyzingCv}
         errorMessage={buildReviewError}
         onClose={closeBuildReviewModal}
         onChange={handleBuildReviewInputChange}
-        onBuildWithAi={handleBuildWithAiPlaceholder}
+        onBuildWithAi={handleBuildWithAi}
         onSubmit={handleBuildReviewSubmit}
       />
 

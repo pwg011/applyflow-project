@@ -17,6 +17,7 @@ type PersonaBuildReviewModalProps = {
   persona: Persona | null;
   formData: PersonaBuildReviewFormData;
   isSaving: boolean;
+  isAnalyzing: boolean;
   errorMessage: string;
   onClose: () => void;
   onChange: (
@@ -71,6 +72,7 @@ export default function PersonaBuildReviewModal({
   persona,
   formData,
   isSaving,
+  isAnalyzing,
   errorMessage,
   onClose,
   onChange,
@@ -179,6 +181,7 @@ export default function PersonaBuildReviewModal({
                   multiline
                 />
 
+                {/* TODO: Add browser OCR fallback for scanned PDFs. */}
                 {errorMessage ? (
                   <p className="text-sm text-red-600">{errorMessage}</p>
                 ) : null}
@@ -197,9 +200,10 @@ export default function PersonaBuildReviewModal({
                   <button
                     type="button"
                     onClick={onBuildWithAi}
+                    disabled={isAnalyzing}
                     className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
                   >
-                    Build with AI
+                    {isAnalyzing ? "Analyzing CV..." : "Build with AI"}
                   </button>
                   <button
                     type="submit"
