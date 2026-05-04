@@ -28,6 +28,7 @@ const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const personaCvBucketName = "persona-cvs";
+const cvAnalysisModel = "openai/gpt-4o-mini";
 
 const openai = openRouterApiKey
   ? new OpenAI({
@@ -82,6 +83,26 @@ function keepConciseRole(value: unknown) {
   return normalizeString(value).split(" ").slice(0, 8).join(" ");
 }
 
+function getFileExtension(value: string) {
+  return value.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "unknown";
+}
+
+function hasMeaningfulContent(value: string) {
+  return /[A-Za-z0-9]/.test(value.trim());
+}
+
+function isMeaningfulCvAnalysis(result: CvAnalysisResponse) {
+  const meaningfulFields = [
+    result.display_name,
+    result.professional_title,
+    result.target_role,
+    result.skills,
+    result.experience_summary,
+  ].filter(hasMeaningfulContent);
+
+  return meaningfulFields.length >= 2;
+}
+
 function normalizeCvAnalysis(payload: unknown): CvAnalysisResponse {
   if (!payload || typeof payload !== "object") {
     return {
@@ -109,9 +130,46 @@ function normalizeCvAnalysis(payload: unknown): CvAnalysisResponse {
 }
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID().slice(0, 8);
+  const logPrefix = `[analyze-cv:${requestId}]`;
+  const totalStartedAt = Date.now();
+  let stageStartedAt = totalStartedAt;
+  let currentStage = "start";
+
+  function mark(stage: string, metadata?: Record<string, unknown>) {
+    const now = Date.now();
+    console.info(`${logPrefix} ${stage} ${now - stageStartedAt}ms`, metadata ?? {});
+    stageStartedAt = now;
+    currentStage = stage;
+  }
+
+  function logFailure(error: unknown) {
+    console.error(`${logPrefix} failed stage=${currentStage}`, {
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  function logTotal(status: number) {
+    console.info(`${logPrefix} total ${Date.now() - totalStartedAt}ms`, {
+      status,
+    });
+  }
+
+  function jsonResponse(
+    body: Parameters<typeof NextResponse.json>[0],
+    init?: Parameters<typeof NextResponse.json>[1],
+    metadata?: Record<string, unknown>,
+  ) {
+    const status = init?.status ?? 200;
+    mark("response-ready", { status, ...metadata });
+    logTotal(status);
+    return NextResponse.json(body, init);
+  }
+
   try {
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
+      logFailure(new Error("Supabase client environment variables are not configured."));
+      return jsonResponse(
         { error: "Supabase client environment variables are not configured." },
         { status: 500 },
       );
@@ -120,7 +178,8 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get("Authorization");
 
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
+      mark("auth", { authenticated: false });
+      return jsonResponse(
         { error: "You must be authenticated to analyze a CV." },
         { status: 401 },
       );
@@ -134,13 +193,17 @@ export async function POST(request: Request) {
     const providedCvText =
       typeof body.cv_text === "string" ? normalizeExtractedText(body.cv_text) : "";
 
-    console.info("[analyze-cv] requested persona id:", personaId);
-    console.info("[analyze-cv] requested cv_file_path:", cvFilePath || "(none)");
-    console.info("[analyze-cv] cv_text provided:", Boolean(providedCvText));
-    console.info("[analyze-cv] storage bucket:", personaCvBucketName);
+    mark("parse-body", {
+      hasPersonaId: Boolean(personaId),
+      hasCvFilePath: Boolean(cvFilePath),
+      fileExtension: cvFilePath ? getFileExtension(cvFilePath) : "none",
+      cvTextProvided: Boolean(providedCvText),
+      providedTextLength: providedCvText.length,
+      storageBucket: personaCvBucketName,
+    });
 
     if (!personaId || (!cvFilePath && !providedCvText)) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: "persona_id and either cv_file_path or cv_text are required." },
         { status: 400 },
       );
@@ -159,8 +222,10 @@ export async function POST(request: Request) {
       error: userError,
     } = await supabase.auth.getUser();
 
+    mark("auth", { authenticated: Boolean(user), hasError: Boolean(userError) });
+
     if (userError || !user) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: "Could not verify the authenticated user." },
         { status: 401 },
       );
@@ -173,8 +238,14 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    mark("persona-check", {
+      found: Boolean(persona),
+      hasError: Boolean(personaError),
+      hasSavedCvPath: Boolean(persona?.cv_file_path),
+    });
+
     if (personaError || !persona) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: "Could not find that persona for the current user." },
         { status: 404 },
       );
@@ -184,14 +255,16 @@ export async function POST(request: Request) {
 
     if (!extractedText) {
       if (!persona.cv_file_path) {
-        return NextResponse.json(
+        mark("text-ready", { hasText: false, source: "none" });
+        return jsonResponse(
           { error: "No CV is attached to this persona." },
           { status: 400 },
         );
       }
 
       if (persona.cv_file_path !== cvFilePath) {
-        return NextResponse.json(
+        mark("text-ready", { hasText: false, source: "path-mismatch" });
+        return jsonResponse(
           { error: "The requested CV file does not match the saved persona CV." },
           { status: 400 },
         );
@@ -201,22 +274,31 @@ export async function POST(request: Request) {
         .from(personaCvBucketName)
         .download(cvFilePath);
 
+      mark("storage-download", {
+        hasBlob: Boolean(cvBlob),
+        hasError: Boolean(downloadError),
+        blobSize: cvBlob?.size ?? 0,
+        blobType: cvBlob?.type || "unknown",
+        fileExtension: getFileExtension(cvFilePath),
+      });
+
       if (downloadError || !cvBlob) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: "Could not download the CV file." },
           { status: 500 },
         );
       }
 
-      console.info("[analyze-cv] downloaded blob size:", cvBlob.size);
-      console.info("[analyze-cv] downloaded blob type:", cvBlob.type || "unknown");
-
       const cvBuffer = Buffer.from(await cvBlob.arrayBuffer());
 
-      console.info("[analyze-cv] buffer length:", cvBuffer.length);
+      mark("buffer-conversion", {
+        bufferLength: cvBuffer.length,
+        blobType: cvBlob.type || "unknown",
+      });
 
       if (cvBuffer.length === 0) {
-        return NextResponse.json(
+        mark("text-ready", { hasText: false, source: "empty-buffer" });
+        return jsonResponse(
           { error: "The CV file appears to be empty." },
           { status: 500 },
         );
@@ -229,22 +311,35 @@ export async function POST(request: Request) {
         contentType: cvBlob.type || "",
       });
 
+      mark("extraction", {
+        status: extractionResult.status,
+        method: "source" in extractionResult ? extractionResult.source : "unknown",
+        textLength: "textLength" in extractionResult ? extractionResult.textLength : 0,
+        signalCount: "signalCount" in extractionResult ? extractionResult.signalCount : 0,
+        needsClientOcr: extractionResult.status === "needs_client_ocr",
+      });
+
       if (extractionResult.status === "needs_client_ocr") {
-        console.info("[analyze-cv] client OCR required:", {
+        mark("text-ready", {
+          hasText: false,
+          needsClientOcr: true,
           textLength: extractionResult.textLength,
           signalCount: extractionResult.signalCount,
         });
 
-        return NextResponse.json({
+        return jsonResponse({
           needsClientOcr: true,
           reason: extractionResult.reason,
         });
       }
 
       if (extractionResult.status !== "success") {
-        console.info("[analyze-cv] extraction failed status:", extractionResult.status);
+        mark("text-ready", {
+          hasText: false,
+          status: extractionResult.status,
+        });
 
-        return NextResponse.json(
+        return jsonResponse(
           { error: extractionResult.error },
           { status: 400 },
         );
@@ -253,19 +348,23 @@ export async function POST(request: Request) {
       extractedText = extractionResult.text;
     }
 
-    console.info("[analyze-cv] extracted text length:", extractedText.length);
+    mark("text-ready", {
+      hasText: Boolean(extractedText),
+      textLength: extractedText.length,
+      source: providedCvText ? "provided-text" : "extracted-file",
+    });
 
     if (!openai) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: "OPENROUTER_API_KEY is not configured." },
         { status: 500 },
       );
     }
 
-    console.info("[analyze-cv] OpenRouter called:", true);
+    console.info(`${logPrefix} OpenRouter called`, { model: cvAnalysisModel });
 
     const completionRequest = {
-      model: "openrouter/free",
+      model: cvAnalysisModel,
       messages: [
         {
           role: "system",
@@ -286,10 +385,10 @@ export async function POST(request: Request) {
             "display_name: return the candidate's full name only, cleaned of OCR symbols and noise.",
             "email: return the clearest email found.",
             "phone: return the clearest phone number found.",
-            "professional_title: use the clearest current, recent, or stated professional identity. If the CV shows multiple identities, return a broad but faithful title. Do not make professional_title conflict with target_role. Do not invent. Keep it concise, but do not over-narrow.",
+            "professional_title: return clean professional role titles. The field may contain more than one title if the CV clearly supports multiple professional identities. Use only titles supported by the CV's headline, summary, current or recent experience, work history, or repeated skill pattern. Separate multiple titles with this exact separator: ' | '. Each title should be clean, role-like, and concise. Do not use descriptive phrases, personality descriptions, marketing language, or summary-style wording. Do not include words that merely describe focus, experience level, personality, or value proposition. Do not invent role titles outside the CV. Do not add too many titles. Include only the strongest clearly supported titles. If one title is clearly dominant, return only that title.",
             "target_role: use the stated or clearly implied target role from the CV. If the CV is tailored toward a role, use that role. If no target role is clear, return an empty string. Do not make target_role conflict with professional_title. If uncertain, prefer leaving target_role empty.",
             "skills: extract all clearly listed skills from the CV as a comma-separated string. Include technical skills, tools, software, role skills, and clearly listed soft skills. Deduplicate only exact or near-exact duplicates. Do not aggressively reduce the list or cap it too tightly. A long skills list is acceptable because the user can edit it in the review pane.",
-            "experience_summary: write 2 to 4 clear sentences that summarize the CV faithfully. Reflect the person's range of experience if the CV is broad. Do not force one direction. Do not add unsupported claims.",
+            "experience_summary: write in professional CV summary style. Do not include the candidate's name. Do not use first-person or third-person pronouns. Start directly with the candidate's professional identity, background, strengths, or experience. Summarize only what is supported by the CV. Preserve the candidate's range of experience where relevant. Do not exaggerate. Do not turn it into a cover letter. Write 2 to 4 clear sentences.",
           ].join(" "),
         },
         {
@@ -320,7 +419,8 @@ export async function POST(request: Request) {
     const response = (await openai.chat.completions.create(
       completionRequest,
     )) as OpenAI.Chat.ChatCompletion;
-    console.info("[analyze-cv] OpenRouter response received:", {
+    mark("openrouter", {
+      model: cvAnalysisModel,
       hasChoices: Array.isArray(response.choices),
       choiceCount: response.choices?.length ?? 0,
     });
@@ -331,8 +431,8 @@ export async function POST(request: Request) {
     const responseText = firstChoice?.message?.content ?? "";
 
     if (!responseText) {
-      console.info("[analyze-cv] OpenRouter response status:", "empty-content");
-      return NextResponse.json(
+      mark("parse-ai-response", { status: "empty-content" });
+      return jsonResponse(
         { error: "OpenRouter returned an empty CV analysis response." },
         { status: 500 },
       );
@@ -343,23 +443,42 @@ export async function POST(request: Request) {
     try {
       parsedAnalysis = JSON.parse(responseText) as unknown;
     } catch {
-      console.info("[analyze-cv] OpenRouter response status:", "invalid-json");
-      return NextResponse.json(
+      mark("parse-ai-response", { status: "invalid-json" });
+      return jsonResponse(
         { error: "OpenRouter returned invalid JSON for CV analysis." },
         { status: 500 },
       );
     }
 
-    console.info("[analyze-cv] OpenRouter response status:", "ok");
-    console.info(
-      "[analyze-cv] parsed JSON keys:",
+    const normalizedAnalysis = normalizeCvAnalysis(parsedAnalysis);
+    const parsedKeys =
       parsedAnalysis && typeof parsedAnalysis === "object"
         ? Object.keys(parsedAnalysis as Record<string, unknown>)
-        : [],
-    );
+        : [];
 
-    return NextResponse.json(normalizeCvAnalysis(parsedAnalysis));
+    if (!isMeaningfulCvAnalysis(normalizedAnalysis)) {
+      console.error(`${logPrefix} unusable CV analysis`, {
+        parsedKeys,
+      });
+      mark("parse-ai-response", {
+        status: "unusable-output",
+        parsedKeys,
+      });
+      return jsonResponse(
+        { error: "AI returned an unusable CV analysis. Please try again." },
+        { status: 502 },
+      );
+    }
+
+    mark("parse-ai-response", {
+      status: "ok",
+      parsedKeys,
+    });
+
+    return jsonResponse(normalizedAnalysis);
   } catch (error) {
+    logFailure(error);
+
     if (error instanceof OpenAI.APIError) {
       const status = error.status ?? 500;
       const message =
@@ -373,10 +492,10 @@ export async function POST(request: Request) {
                 ? error.message || "OpenRouter could not analyze this CV."
                 : error.message || "OpenRouter failed to analyze the CV.";
 
-      return NextResponse.json({ error: message }, { status });
+      return jsonResponse({ error: message }, { status });
     }
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         error:
           error instanceof Error ? error.message : "Failed to analyze the CV.",
