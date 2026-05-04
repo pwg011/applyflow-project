@@ -22,6 +22,7 @@ type SkillCategoryName = "Explicit" | "Inferred" | "Suggested";
 type ParsedSkillCategories = Record<SkillCategoryName, string[]>;
 
 const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+const jobAnalysisModel = "openai/gpt-4o-mini";
 const skillCategoryOrder: SkillCategoryName[] = [
   "Explicit",
   "Inferred",
@@ -89,6 +90,48 @@ function normalizeNullableString(value: unknown): string | null {
 
   const normalizedValue = value.trim();
   return normalizedValue ? normalizedValue : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function getSafeErrorMessage(value: unknown) {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (typeof value.message === "string") {
+    return value.message;
+  }
+
+  if (isRecord(value.error) && typeof value.error.message === "string") {
+    return value.error.message;
+  }
+
+  return null;
+}
+
+function logUnexpectedOpenRouterResponse(response: unknown) {
+  const responseRecord = isRecord(response) ? response : null;
+  const choices = responseRecord?.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : null;
+  const firstChoiceRecord = isRecord(firstChoice) ? firstChoice : null;
+  const message = firstChoiceRecord?.message;
+  const messageRecord = isRecord(message) ? message : null;
+
+  console.error("[analyze-job] unexpected OpenRouter response", {
+    model: jobAnalysisModel,
+    status: responseRecord?.status,
+    hasResponse: Boolean(response),
+    responseKeys: responseRecord ? Object.keys(responseRecord) : [],
+    choicesExists: Boolean(responseRecord && "choices" in responseRecord),
+    choicesIsArray: Array.isArray(choices),
+    choiceCount: Array.isArray(choices) ? choices.length : null,
+    messageExists: Boolean(messageRecord),
+    contentExists: typeof messageRecord?.content === "string",
+    errorMessage: getSafeErrorMessage(response),
+  });
 }
 
 function normalizeWhitespace(value: string) {
@@ -381,7 +424,7 @@ export async function POST(request: Request) {
         ].join(" ");
 
     const completionRequest = {
-      model: "openrouter/free",
+      model: jobAnalysisModel,
       messages: [
         {
           role: "system",
@@ -415,11 +458,65 @@ export async function POST(request: Request) {
       },
     } as Parameters<typeof openai.chat.completions.create>[0];
 
-    const response = (await openai.chat.completions.create(
-      completionRequest,
-    )) as OpenAI.Chat.ChatCompletion;
+    console.info("[analyze-job] OpenRouter model:", jobAnalysisModel);
 
-    const responseText = response.choices[0]?.message?.content ?? "";
+    let response: unknown;
+
+    try {
+      response = await openai.chat.completions.create(completionRequest);
+    } catch (error) {
+      console.error("[analyze-job] OpenRouter request failed", {
+        model: jobAnalysisModel,
+        status: error instanceof OpenAI.APIError ? error.status : null,
+        errorMessage: error instanceof Error ? error.message : null,
+      });
+
+      return NextResponse.json(
+        { error: "AI job analysis failed. Please try again." },
+        { status: 502 },
+      );
+    }
+
+    if (!isRecord(response)) {
+      logUnexpectedOpenRouterResponse(response);
+      return NextResponse.json(
+        {
+          error: "AI provider returned an unexpected response. Please try again.",
+        },
+        { status: 502 },
+      );
+    }
+
+    const choices = response.choices;
+
+    if (!Array.isArray(choices) || choices.length === 0) {
+      logUnexpectedOpenRouterResponse(response);
+      return NextResponse.json(
+        {
+          error: "AI provider returned an unexpected response. Please try again.",
+        },
+        { status: 502 },
+      );
+    }
+
+    const firstChoice = choices[0];
+    const firstChoiceMessage = isRecord(firstChoice)
+      ? firstChoice.message
+      : null;
+    const responseText = isRecord(firstChoiceMessage)
+      ? firstChoiceMessage.content
+      : null;
+
+    if (typeof responseText !== "string" || !responseText) {
+      logUnexpectedOpenRouterResponse(response);
+      return NextResponse.json(
+        {
+          error: "AI provider returned an unexpected response. Please try again.",
+        },
+        { status: 502 },
+      );
+    }
+
     const parsedAnalysis = responseText
       ? (JSON.parse(responseText) as unknown)
       : null;
