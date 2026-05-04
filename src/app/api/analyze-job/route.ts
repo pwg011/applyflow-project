@@ -1,6 +1,6 @@
 import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { normalizeJobSkills } from "@/utils/skillNormalizer";
 
 type AnalyzeJobRequestBody = {
   raw_job_text?: unknown;
@@ -18,8 +18,22 @@ type JobAnalysisResponse = {
 };
 
 type ExistingAnalysisInput = Partial<JobAnalysisResponse>;
+type SkillCategoryName = "Explicit" | "Inferred" | "Suggested";
+type ParsedSkillCategories = Record<SkillCategoryName, string[]>;
 
 const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+const skillCategoryOrder: SkillCategoryName[] = [
+  "Explicit",
+  "Inferred",
+  "Suggested",
+];
+const skillPhraseReplacements: Array<[RegExp, string]> = [
+  [/\bteam work\b/gi, "teamwork"],
+  [/\bproblem solving\b/gi, "problem-solving"],
+  [/\bdecision making\b/gi, "decision-making"],
+  [/\brest api(s)?\b/gi, "REST APIs"],
+  [/\bapi integrations?\b/gi, "API integration"],
+];
 
 const openai = openRouterApiKey
   ? new OpenAI({
@@ -77,6 +91,116 @@ function normalizeNullableString(value: unknown): string | null {
   return normalizedValue ? normalizedValue : null;
 }
 
+function normalizeWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function parseSkillCategory(
+  skillsText: string,
+  category: SkillCategoryName,
+  nextCategory?: SkillCategoryName,
+) {
+  const startMarker = `${category}:`;
+  const startIndex = skillsText.indexOf(startMarker);
+
+  if (startIndex === -1) {
+    return null;
+  }
+
+  const contentStart = startIndex + startMarker.length;
+  const endIndex = nextCategory
+    ? skillsText.indexOf(`| ${nextCategory}:`, contentStart)
+    : skillsText.length;
+
+  if (endIndex === -1) {
+    return null;
+  }
+
+  return skillsText.slice(contentStart, endIndex).trim();
+}
+
+function parseJobSkills(skillsText: string): ParsedSkillCategories | null {
+  const explicit = parseSkillCategory(skillsText, "Explicit", "Inferred");
+  const inferred = parseSkillCategory(skillsText, "Inferred", "Suggested");
+  const suggested = parseSkillCategory(skillsText, "Suggested");
+
+  if (explicit === null || inferred === null || suggested === null) {
+    return null;
+  }
+
+  return {
+    Explicit: explicit.split(",").map(normalizeWhitespace).filter(Boolean),
+    Inferred: inferred.split(",").map(normalizeWhitespace).filter(Boolean),
+    Suggested: suggested.split(",").map(normalizeWhitespace).filter(Boolean),
+  };
+}
+
+function normalizeSkillLabel(rawSkill: string) {
+  let skill = normalizeWhitespace(rawSkill)
+    .replace(/^[\-\u2022*]+/, "")
+    .replace(/[.;:]+$/g, "")
+    .replace(/[()]+/g, "")
+    .trim();
+
+  for (const [pattern, replacement] of skillPhraseReplacements) {
+    skill = skill.replace(pattern, replacement);
+  }
+
+  skill = normalizeWhitespace(skill);
+
+  return skill && !/^none$/i.test(skill) ? skill : null;
+}
+
+function dedupeSkills(skills: string[]) {
+  const seen = new Set<string>();
+  const dedupedSkills: string[] = [];
+
+  for (const skill of skills) {
+    const dedupeKey = skill
+      .toLowerCase()
+      .replace(/[^a-z0-9+#/.\s-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!dedupeKey || seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    dedupedSkills.push(skill);
+  }
+
+  return dedupedSkills;
+}
+
+function formatSkillCategory(category: SkillCategoryName, skills: string[]) {
+  return `${category}: ${skills.length > 0 ? skills.join(", ") : "None"}`;
+}
+
+function normalizeJobSkills(jobSkills?: string | null) {
+  if (!jobSkills || !jobSkills.trim()) {
+    return jobSkills ?? null;
+  }
+
+  const parsedSkills = parseJobSkills(jobSkills);
+
+  if (!parsedSkills) {
+    return normalizeWhitespace(jobSkills);
+  }
+
+  return skillCategoryOrder
+    .map((category) => {
+      const skills = dedupeSkills(
+        parsedSkills[category]
+          .map(normalizeSkillLabel)
+          .filter((skill): skill is string => Boolean(skill)),
+      );
+
+      return formatSkillCategory(category, skills);
+    })
+    .join(" | ");
+}
+
 function normalizeAnalysis(payload: unknown): JobAnalysisResponse {
   if (!payload || typeof payload !== "object") {
     return emptyAnalysis;
@@ -131,6 +255,26 @@ function hasExistingAnalysis(analysis: ExistingAnalysisInput | null) {
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (!openai) {
       return NextResponse.json(
         { error: "OPENROUTER_API_KEY is not configured." },

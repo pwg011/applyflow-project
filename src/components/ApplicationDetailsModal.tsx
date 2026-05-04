@@ -475,9 +475,22 @@ export default function ApplicationDetailsModal({
     setAnalysisFeedback(null);
 
     try {
+      const {
+        data: { session: analysisSession },
+      } = await supabase.auth.getSession();
+
+      if (!analysisSession?.access_token) {
+        setAnalysisFeedback({
+          message: "You must be logged in to analyze a job.",
+          tone: "error",
+        });
+        return;
+      }
+
       const response = await fetch("/api/analyze-job", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${analysisSession.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(
@@ -492,21 +505,37 @@ export default function ApplicationDetailsModal({
         ),
       });
 
-      const responseBody = (await response.json()) as unknown;
+      const analysisData = (await response.json()) as unknown;
+      const errorMessage =
+        analysisData && typeof analysisData === "object" && "error" in analysisData
+          ? (analysisData as { error?: unknown }).error
+          : null;
 
-      if (!response.ok) {
-        throw new Error(
-          typeof responseBody === "object" &&
-            responseBody !== null &&
-            "error" in responseBody &&
-            typeof responseBody.error === "string"
-            ? responseBody.error
-            : "Could not analyze this job posting.",
-        );
+      if (!response.ok || errorMessage) {
+        setAnalysisFeedback({
+          message:
+            typeof errorMessage === "string" && errorMessage
+              ? errorMessage
+              : "Failed to analyze job",
+          tone: "error",
+        });
+        return;
       }
 
-      if (!isJobAnalysisPayload(responseBody)) {
-        throw new Error("The analysis response was incomplete.");
+      if (!analysisData || typeof analysisData !== "object") {
+        setAnalysisFeedback({
+          message: "Failed to analyze job",
+          tone: "error",
+        });
+        return;
+      }
+
+      if (!isJobAnalysisPayload(analysisData)) {
+        setAnalysisFeedback({
+          message: "The analysis response was incomplete.",
+          tone: "error",
+        });
+        return;
       }
 
       const {
@@ -519,18 +548,18 @@ export default function ApplicationDetailsModal({
 
       const analyzedAt = new Date().toISOString();
       const updates = {
-        job_location: responseBody.job_location,
-        job_deadline: responseBody.job_deadline,
-        job_requirements: responseBody.job_requirements,
-        job_responsibilities: responseBody.job_responsibilities,
-        job_skills: responseBody.job_skills,
-        job_benefits: responseBody.job_benefits,
-        application_instructions: responseBody.application_instructions,
+        job_location: analysisData.job_location,
+        job_deadline: analysisData.job_deadline,
+        job_requirements: analysisData.job_requirements,
+        job_responsibilities: analysisData.job_responsibilities,
+        job_skills: analysisData.job_skills,
+        job_benefits: analysisData.job_benefits,
+        application_instructions: analysisData.application_instructions,
         analysis_status: "analyzed",
         analyzed_at: analyzedAt,
       };
 
-      const { data, error } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from("applications")
         .update(updates)
         .select(
@@ -549,11 +578,13 @@ export default function ApplicationDetailsModal({
         .eq("id", activeApplication.id)
         .eq("user_id", session.user.id);
 
-      if (error) {
-        throw new Error(error.message || "Could not save analysis.");
+      if (updateError) {
+        throw new Error(updateError.message || "Could not save analysis.");
       }
 
-      const savedAnalysis = Array.isArray(data) ? data[0] : data;
+      const savedAnalysis = Array.isArray(updateData)
+        ? updateData[0]
+        : updateData;
 
       if (!savedAnalysis) {
         throw new Error("Could not save analysis.");
@@ -563,6 +594,7 @@ export default function ApplicationDetailsModal({
         ...current,
         [activeApplication.id]: {
           ...(current[activeApplication.id] ?? {}),
+          ...mapAnalysisRow(updates),
           ...mapAnalysisRow(savedAnalysis as Partial<PersistedAnalysisFields>),
         },
       }));
