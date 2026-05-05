@@ -9,7 +9,7 @@ import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal from "@/components/ImportPreviewModal";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
-import { supabase } from "@/lib/supabaseClient";
+import { supabasse } from "@/lib/supabaseClient";
 import ApplicationCard from "@/components/ApplicationCard";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -815,10 +815,7 @@ export default function Home() {
               {"\u2630"}
             </button>
 
-            <BurgerMenu
-              isOpen={isBurgerMenuOpen}
-              currentPath={pathname}
-            />
+            <BurgerMenu isOpen={isBurgerMenuOpen} currentPath={pathname} />
           </div>
 
           <div className="text-center">

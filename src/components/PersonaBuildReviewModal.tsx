@@ -1,6 +1,8 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
 
 type PersonaBuildReviewFormData = {
@@ -36,6 +38,66 @@ type FieldProps = {
   ) => void;
   multiline?: boolean;
 };
+
+type PersonaCvAnalysisResponse = PersonaBuildReviewFormData;
+
+type NeedsClientOcrResponse = {
+  needsClientOcr: true;
+  reason: string;
+};
+
+const personaCvBucketName = "persona-cvs";
+const unclearCvMessage =
+  "This CV could not be read clearly. Please upload a clearer PDF or DOCX file.";
+
+function isPdfPersonaCv(persona: Persona) {
+  return Boolean(
+    persona.cv_file_path?.toLowerCase().endsWith(".pdf") ||
+      persona.cv_file_name?.toLowerCase().endsWith(".pdf"),
+  );
+}
+
+function isPersonaCvAnalysisResponse(
+  value: unknown,
+): value is PersonaCvAnalysisResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.display_name === "string" &&
+    typeof candidate.email === "string" &&
+    typeof candidate.phone === "string" &&
+    typeof candidate.professional_title === "string" &&
+    typeof candidate.target_role === "string" &&
+    typeof candidate.skills === "string" &&
+    typeof candidate.experience_summary === "string"
+  );
+}
+
+function isNeedsClientOcrResponse(value: unknown): value is NeedsClientOcrResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    candidate.needsClientOcr === true && typeof candidate.reason === "string"
+  );
+}
+
+function getApiErrorMessage(value: unknown, fallback: string) {
+  if (!value || typeof value !== "object") {
+    return fallback;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return typeof candidate.error === "string" ? candidate.error : fallback;
+}
 
 function Field({
   label,
@@ -79,6 +141,164 @@ export default function PersonaBuildReviewModal({
   onBuildWithAi,
   onSubmit,
 }: PersonaBuildReviewModalProps) {
+  const [localIsAnalyzing, setLocalIsAnalyzing] = useState(false);
+  const [localMessage, setLocalMessage] = useState("");
+  const [localError, setLocalError] = useState("");
+  const isBusy = isAnalyzing || localIsAnalyzing;
+
+  function applyAnalysisFields(result: PersonaCvAnalysisResponse) {
+    (Object.entries(result) as Array<
+      [keyof PersonaBuildReviewFormData, string]
+    >).forEach(([name, value]) => {
+      onChange({
+        target: {
+          name,
+          value,
+        },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+  }
+
+  async function analyzeCv(
+    personaId: string,
+    token: string,
+    payload: { cv_file_path?: string; cv_text?: string },
+  ) {
+    const response = await fetch("/api/analyze-cv", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        persona_id: personaId,
+        ...payload,
+      }),
+    });
+    const responseBody = (await response.json()) as unknown;
+
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(responseBody, "Could not analyze this CV."));
+    }
+
+    return responseBody;
+  }
+
+  async function handleBuildWithAiClick() {
+    setLocalError("");
+    setLocalMessage("");
+
+    if (!persona || !isPdfPersonaCv(persona)) {
+      onBuildWithAi();
+      return;
+    }
+
+    if (!persona.cv_file_path) {
+      setLocalError("No CV is attached to this draft persona.");
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      setLocalError("You must be logged in to analyze this CV.");
+      return;
+    }
+
+    setLocalIsAnalyzing(true);
+
+    try {
+      console.info("[browser-ocr] build-with-ai clicked", {
+        isPdf: true,
+        hasCvFilePath: Boolean(persona.cv_file_path),
+      });
+
+      const firstResponse = await analyzeCv(persona.id, session.access_token, {
+        cv_file_path: persona.cv_file_path,
+      });
+
+      if (isPersonaCvAnalysisResponse(firstResponse)) {
+        applyAnalysisFields(firstResponse);
+        setLocalMessage("CV analysis completed. Review the fields before saving.");
+        return;
+      }
+
+      if (!isNeedsClientOcrResponse(firstResponse)) {
+        throw new Error("The CV analysis response was incomplete.");
+      }
+
+      console.info("[browser-ocr] needsClientOcr received", {
+        hasCvFilePath: Boolean(persona.cv_file_path),
+        hasReason: Boolean(firstResponse.reason),
+      });
+
+      setLocalMessage("Scanning PDF in browser...");
+
+      const { data: blob, error: downloadError } = await supabase.storage
+        .from(personaCvBucketName)
+        .download(persona.cv_file_path);
+
+      console.info("[browser-ocr] storage download completed", {
+        success: Boolean(blob && !downloadError),
+        hasError: Boolean(downloadError),
+        blobSize: blob?.size ?? 0,
+        blobType: blob?.type || "unknown",
+      });
+
+      if (downloadError || !blob) {
+        throw new Error(downloadError?.message || "Could not download the CV file.");
+      }
+
+      const { ocrPdfBlobInBrowser } = await import("@/utils/clientPdfOcr");
+      console.info("[browser-ocr] OCR starting", {
+        blobSize: blob.size,
+        blobType: blob.type || "unknown",
+        maxPages: 3,
+        scale: 2.5,
+      });
+      const ocrText = (
+        await ocrPdfBlobInBrowser(blob, {
+          maxPages: 3,
+          scale: 2.5,
+          onProgress: setLocalMessage,
+        })
+      ).trim();
+
+      console.info("[browser-ocr] OCR completed", {
+        textLength: ocrText.length,
+      });
+
+      if (ocrText.length < 120) {
+        throw new Error(unclearCvMessage);
+      }
+
+      setLocalMessage("Building persona with scanned text...");
+      console.info("[browser-ocr] retrying analyze-cv with OCR text", {
+        textLength: ocrText.length,
+      });
+
+      const retryResponse = await analyzeCv(persona.id, session.access_token, {
+        cv_text: ocrText,
+      });
+
+      if (!isPersonaCvAnalysisResponse(retryResponse)) {
+        throw new Error("The CV analysis response was incomplete.");
+      }
+
+      applyAnalysisFields(retryResponse);
+      setLocalMessage("CV analysis completed. Review the fields before saving.");
+    } catch (error) {
+      setLocalError(
+        error instanceof Error ? error.message : "Could not analyze this CV.",
+      );
+      setLocalMessage("");
+    } finally {
+      setLocalIsAnalyzing(false);
+    }
+  }
+
   return (
     <div
       className={`fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/40 px-6 backdrop-blur-sm transition-all duration-300 ${
@@ -181,9 +401,14 @@ export default function PersonaBuildReviewModal({
                   multiline
                 />
 
-                {/* TODO: Add browser OCR fallback for scanned PDFs. */}
-                {errorMessage ? (
-                  <p className="text-sm text-red-600">{errorMessage}</p>
+                {localMessage ? (
+                  <p className="text-sm text-slate-600">{localMessage}</p>
+                ) : null}
+
+                {localError || errorMessage ? (
+                  <p className="text-sm text-red-600">
+                    {localError || errorMessage}
+                  </p>
                 ) : null}
               </div>
 
@@ -199,11 +424,11 @@ export default function PersonaBuildReviewModal({
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
                     type="button"
-                    onClick={onBuildWithAi}
-                    disabled={isAnalyzing}
+                    onClick={() => void handleBuildWithAiClick()}
+                    disabled={isBusy}
                     className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
                   >
-                    {isAnalyzing ? "Analyzing CV..." : "Build with AI"}
+                    {isBusy ? "Analyzing CV..." : "Build with AI"}
                   </button>
                   <button
                     type="submit"
