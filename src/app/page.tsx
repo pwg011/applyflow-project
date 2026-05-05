@@ -135,11 +135,13 @@ export default function Home() {
     return matchesSearch && matchesStatus;
   });
   const hasDraftData =
-    formData.companyName.trim() !== "" ||
-    formData.jobTitle.trim() !== "" ||
-    formData.jobLink.trim() !== "" ||
-    formData.dateApplied.trim() !== "" ||
-    formData.notes.trim() !== "";
+    editingId === null &&
+    (formData.companyName.trim() !== "" ||
+      formData.jobTitle.trim() !== "" ||
+      formData.jobLink.trim() !== "" ||
+      (formData.dateApplied.trim() !== "" &&
+        formData.dateApplied !== formatTodayForDisplay()) ||
+      formData.notes.trim() !== "");
 
   function logSupabaseError(
     action: string,
@@ -367,11 +369,19 @@ export default function Home() {
 
   function openBlankApplicationPanel() {
     setEditingId(null);
-    setFormData(initialFormData);
+    setFormData({
+      ...initialFormData,
+      dateApplied: formatTodayForDisplay(),
+    });
     setIsPanelOpen(true);
   }
 
   function closePanel() {
+    if (editingId !== null) {
+      setEditingId(null);
+      setFormData(initialFormData);
+    }
+
     setIsPanelOpen(false);
   }
 
@@ -465,25 +475,63 @@ export default function Home() {
     );
   }
 
-  function handleContinueImportPreview() {
+  async function handleSaveImportPreview() {
     if (!importPreviewData) {
       return;
     }
 
-    setFormData({
-      ...initialFormData,
-      companyName: importPreviewData.companyName,
-      jobTitle: importPreviewData.jobTitle,
-      jobLink: importPreviewData.jobLink,
+    if (!user) {
+      showToast("You must be logged in to save an application.", "error");
+      return;
+    }
+
+    const applicationData: FormData = {
+      companyName: importPreviewData.companyName.trim(),
+      jobTitle: importPreviewData.jobTitle.trim(),
+      jobLink: importPreviewData.jobLink.trim(),
+      status: "Applied",
       dateApplied: importPreviewData.dateApplied,
       notes: "Imported job posting",
-      rawJobText: importPreviewData.rawJobText,
+      rawJobText: importPreviewData.rawJobText.trim(),
       sourceType: importPreviewData.sourceType,
       importedAt: importPreviewData.importedAt,
+    };
+
+    if (!applicationData.companyName || !applicationData.jobTitle) {
+      showToast("Company and job title are required.", "error");
+      return;
+    }
+
+    setIsSaving(true);
+
+    const { error } = await supabase.from("applications").insert({
+      user_id: user.id,
+      company: applicationData.companyName,
+      role: applicationData.jobTitle,
+      job_url: applicationData.jobLink,
+      status: applicationData.status,
+      date_applied: convertDisplayDateToDbDate(applicationData.dateApplied),
+      notes: applicationData.notes,
+      raw_job_text: applicationData.rawJobText || null,
+      source_type: applicationData.sourceType || "manual",
+      imported_at: applicationData.importedAt || new Date().toISOString(),
     });
-    setIsImportPreviewOpen(false);
-    setImportPreviewData(null);
-    setIsPanelOpen(true);
+
+    if (error) {
+      logSupabaseError("create imported application", error);
+      showToast(
+        error.message || "Something went wrong. Please try again.",
+        "error",
+      );
+      setIsSaving(false);
+      return;
+    }
+
+    await fetchApplications();
+    console.log("Imported job application created:", applicationData);
+    showToast("Application saved", "success");
+    closeImportPreview();
+    setIsSaving(false);
   }
 
   function handleInputChange(
@@ -1090,7 +1138,8 @@ export default function Home() {
         }}
         onChange={handleImportPreviewChange}
         onCancel={closeImportPreview}
-        onContinue={handleContinueImportPreview}
+        onSave={() => void handleSaveImportPreview()}
+        isSaving={isSaving}
       />
 
       <div

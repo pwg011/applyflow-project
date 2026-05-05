@@ -12,15 +12,37 @@ type ImportPreviewModalProps = {
   data: ImportPreviewModalData;
   onChange: (updatedData: ImportPreviewModalData) => void;
   onCancel: () => void;
-  onContinue: () => void;
+  onSave: () => void;
+  isSaving: boolean;
 };
+
+function displayDateToInputDate(displayDate: string) {
+  const [day, month, year] = displayDate.split("/");
+
+  if (!day || !month || !year) {
+    return "";
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function inputDateToDisplayDate(inputDate: string) {
+  const [year, month, day] = inputDate.split("-");
+
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  return `${day}/${month}/${year}`;
+}
 
 export default function ImportPreviewModal({
   isOpen,
   data,
   onChange,
   onCancel,
-  onContinue,
+  onSave,
+  isSaving,
 }: ImportPreviewModalProps) {
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -156,9 +178,14 @@ export default function ImportPreviewModal({
               <input
                 id="previewDateApplied"
                 name="date_applied"
-                type="text"
-                value={data.date_applied}
-                onChange={handleInputChange}
+                type="date"
+                value={displayDateToInputDate(data.date_applied)}
+                onChange={(event) =>
+                  onChange({
+                    ...data,
+                    date_applied: inputDateToDisplayDate(event.target.value),
+                  })
+                }
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               />
             </div>
@@ -175,10 +202,11 @@ export default function ImportPreviewModal({
 
             <button
               type="button"
-              onClick={onContinue}
-              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+              onClick={onSave}
+              disabled={isSaving}
+              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Continue
+              {isSaving ? "Saving..." : "Save Application"}
             </button>
           </div>
         </div>

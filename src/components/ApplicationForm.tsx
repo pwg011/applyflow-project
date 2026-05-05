@@ -32,6 +32,26 @@ type ApplicationFormProps = {
   isSaving: boolean;
 };
 
+function displayDateToInputDate(displayDate: string) {
+  const [day, month, year] = displayDate.split("/");
+
+  if (!day || !month || !year) {
+    return "";
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function inputDateToDisplayDate(inputDate: string) {
+  const [year, month, day] = inputDate.split("-");
+
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  return `${day}/${month}/${year}`;
+}
+
 export default function ApplicationForm({
   isOpen,
   onClose,
@@ -153,10 +173,18 @@ export default function ApplicationForm({
               <input
                 id="dateApplied"
                 name="dateApplied"
-                type="text"
-                placeholder="dd/mm/yyyy"
-                value={formData.dateApplied}
-                onChange={onInputChange}
+                type="date"
+                value={displayDateToInputDate(formData.dateApplied)}
+                onChange={(event) =>
+                  onInputChange({
+                    ...event,
+                    target: {
+                      ...event.target,
+                      name: event.target.name,
+                      value: inputDateToDisplayDate(event.target.value),
+                    },
+                  })
+                }
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               />
             </div>
