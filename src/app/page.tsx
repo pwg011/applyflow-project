@@ -238,6 +238,30 @@ export default function Home() {
   }
 
   useEffect(() => {
+    async function fetchSessionApplications(userId: string) {
+      setIsLoading(true);
+
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        logSupabaseError("fetch applications", error);
+        showToast("Something went wrong. Please try again.", "error");
+        setIsLoading(false);
+        return;
+      }
+
+      setApplications(
+        (data ?? []).map((row) =>
+          mapRowToApplication(row as Partial<Application>),
+        ),
+      );
+      setIsLoading(false);
+    }
+
     async function loadSession() {
       const {
         data: { session },
@@ -253,7 +277,7 @@ export default function Home() {
         setApplications([]);
         setIsLoading(false);
       } else {
-        void fetchApplicationsForUser(session.user.id, { showLoading: true });
+        void fetchSessionApplications(session.user.id);
       }
       setIsAuthReady(true);
     }
@@ -268,7 +292,7 @@ export default function Home() {
         setApplications([]);
         setIsLoading(false);
       } else {
-        void fetchApplicationsForUser(session.user.id, { showLoading: true });
+        void fetchSessionApplications(session.user.id);
       }
       setIsAuthReady(true);
     });
