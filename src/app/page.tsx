@@ -9,7 +9,7 @@ import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal from "@/components/ImportPreviewModal";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
-import { supabasse } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import ApplicationCard from "@/components/ApplicationCard";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -193,9 +193,10 @@ export default function Home() {
     return `${day}/${month}/${year}`;
   }
 
-  async function fetchApplications(options?: { showLoading?: boolean }) {
-    if (!user) return;
-
+  async function fetchApplicationsForUser(
+    userId: string,
+    options?: { showLoading?: boolean },
+  ) {
     const showLoading = options?.showLoading ?? false;
 
     if (showLoading) {
@@ -205,7 +206,7 @@ export default function Home() {
     const { data, error } = await supabase
       .from("applications")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -228,6 +229,12 @@ export default function Home() {
     }
   }
 
+  async function fetchApplications(options?: { showLoading?: boolean }) {
+    if (!user) return;
+
+    await fetchApplicationsForUser(user.id, options);
+  }
+
   useEffect(() => {
     async function loadSession() {
       const {
@@ -240,6 +247,12 @@ export default function Home() {
       }
 
       setUser(session?.user ?? null);
+      if (!session?.user) {
+        setApplications([]);
+        setIsLoading(false);
+      } else {
+        void fetchApplicationsForUser(session.user.id, { showLoading: true });
+      }
       setIsAuthReady(true);
     }
 
@@ -249,6 +262,12 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (!session?.user) {
+        setApplications([]);
+        setIsLoading(false);
+      } else {
+        void fetchApplicationsForUser(session.user.id, { showLoading: true });
+      }
       setIsAuthReady(true);
     });
 
@@ -256,16 +275,6 @@ export default function Home() {
       subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (!user) {
-      setApplications([]);
-      setIsLoading(false);
-      return;
-    }
-
-    void fetchApplications({ showLoading: true });
-  }, [user]);
 
   useEffect(() => {
     if (!toast) {
