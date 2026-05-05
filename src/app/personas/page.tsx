@@ -1015,7 +1015,6 @@ export default function PersonasPage() {
 
               <PlusActionMenu
                 isOpen={isCreateMenuOpen}
-                onClose={() => setIsCreateMenuOpen(false)}
                 onAddManual={openCreateForm}
                 onImport={handleCvAutoFillSelect}
                 addManualLabel="Create manually"
@@ -1033,10 +1032,8 @@ export default function PersonasPage() {
               </button>
 
               <ProfileDropdown
-                user={user}
                 onLogout={handleLogout}
                 isOpen={isProfileMenuOpen}
-                onClose={() => setIsProfileMenuOpen(false)}
               />
             </div>
           </div>

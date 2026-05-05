@@ -1,23 +1,14 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
-
 type ProfileDropdownProps = {
-  user: User;
   onLogout: () => void | Promise<void>;
   isOpen: boolean;
-  onClose: () => void;
 };
 
 export default function ProfileDropdown({
-  user,
   onLogout,
   isOpen,
-  onClose,
 }: ProfileDropdownProps) {
-  void user;
-  void onClose;
-
   return (
     <div
       className={`absolute right-0 top-full z-[53] mt-3 w-44 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl transition-all duration-200 ease-out ${

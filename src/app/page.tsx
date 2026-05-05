@@ -900,7 +900,6 @@ export default function Home() {
 
               <PlusActionMenu
                 isOpen={isAddOptionModalOpen}
-                onClose={closeAddOptionModal}
                 onAddManual={handleAddManually}
                 onImport={handleOpenImportModal}
               />
@@ -916,10 +915,8 @@ export default function Home() {
               </button>
 
               <ProfileDropdown
-                user={user}
                 onLogout={handleLogout}
                 isOpen={isProfileMenuOpen}
-                onClose={() => setIsProfileMenuOpen(false)}
               />
             </div>
           </div>

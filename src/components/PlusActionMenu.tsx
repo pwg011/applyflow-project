@@ -2,7 +2,6 @@
 
 type PlusActionMenuProps = {
   isOpen: boolean;
-  onClose: () => void;
   onAddManual: () => void;
   onImport: () => void;
   addManualLabel?: string;
@@ -11,14 +10,11 @@ type PlusActionMenuProps = {
 
 export default function PlusActionMenu({
   isOpen,
-  onClose,
   onAddManual,
   onImport,
   addManualLabel = "Add manually",
   importLabel = "Import job",
 }: PlusActionMenuProps) {
-  void onClose;
-
   return (
     <div
       className={`absolute left-1/2 top-full z-[53] mt-3 w-44 -translate-x-1/2 origin-top rounded-2xl bg-slate-900 p-2 shadow-2xl transition-all duration-200 ease-out ${
