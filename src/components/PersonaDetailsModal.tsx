@@ -7,8 +7,10 @@ type PersonaDetailsModalProps = {
   onClose: () => void;
   onEdit: (persona: Persona) => void;
   onDelete: (persona: Persona) => void;
+  onRebuildWithAi: (persona: Persona) => void;
   onUploadCv: (persona: Persona, file: File) => void | Promise<void>;
   isUploadingCv: boolean;
+  rebuildError: string;
 };
 
 type DetailRowProps = {
@@ -39,8 +41,10 @@ export default function PersonaDetailsModal({
   onClose,
   onEdit,
   onDelete,
+  onRebuildWithAi,
   onUploadCv,
   isUploadingCv,
+  rebuildError,
 }: PersonaDetailsModalProps) {
   return (
     <div
@@ -126,6 +130,18 @@ export default function PersonaDetailsModal({
                           ? "Replace CV"
                           : "Upload CV"}
                     </label>
+                    {persona.cv_file_path ? (
+                      <button
+                        type="button"
+                        onClick={() => onRebuildWithAi(persona)}
+                        className="ml-3 mt-4 inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        Rebuild with AI
+                      </button>
+                    ) : null}
+                    {rebuildError ? (
+                      <p className="mt-3 text-sm text-red-600">{rebuildError}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>

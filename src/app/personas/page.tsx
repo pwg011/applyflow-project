@@ -185,7 +185,7 @@ export default function PersonasPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
-  const [draftPersonaToBuild, setDraftPersonaToBuild] = useState<Persona | null>(
+  const [personaToBuild, setPersonaToBuild] = useState<Persona | null>(
     null,
   );
   const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
@@ -193,6 +193,8 @@ export default function PersonasPage() {
     useState<PersonaFormData>(initialBuildReviewFormData);
   const [formError, setFormError] = useState("");
   const [buildReviewError, setBuildReviewError] = useState("");
+  const [detailsRebuildError, setDetailsRebuildError] = useState("");
+  const [autoBuildReviewOnOpen, setAutoBuildReviewOnOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
@@ -385,7 +387,7 @@ export default function PersonasPage() {
 
   function openEditForm(persona: Persona) {
     setSelectedPersona(null);
-    setDraftPersonaToBuild(null);
+    setPersonaToBuild(null);
     setEditingPersonaId(persona.id);
     setFormData({
       display_name: persona.display_name,
@@ -401,9 +403,12 @@ export default function PersonasPage() {
   }
 
   function openPersonaDetails(persona: Persona) {
+    setDetailsRebuildError("");
+
     if (persona.build_status === "cv_draft") {
       setSelectedPersona(null);
       setBuildReviewError("");
+      setAutoBuildReviewOnOpen(false);
       setBuildReviewFormData({
         display_name: persona.display_name,
         email: persona.email,
@@ -413,22 +418,55 @@ export default function PersonasPage() {
         skills: persona.skills ?? "",
         experience_summary: persona.experience_summary ?? "",
       });
-      setDraftPersonaToBuild(persona);
+      setPersonaToBuild(persona);
       return;
     }
 
-    setDraftPersonaToBuild(null);
+    setPersonaToBuild(null);
     setSelectedPersona(persona);
   }
 
   function closePersonaDetails() {
     setSelectedPersona(null);
+    setDetailsRebuildError("");
+    setAutoBuildReviewOnOpen(false);
   }
 
   function closeBuildReviewModal() {
-    setDraftPersonaToBuild(null);
+    setPersonaToBuild(null);
     setBuildReviewFormData(initialBuildReviewFormData);
     setBuildReviewError("");
+    setAutoBuildReviewOnOpen(false);
+  }
+
+  function openBuildReviewForPersona(persona: Persona) {
+    if (!persona.cv_file_path) {
+      setDetailsRebuildError("No CV is attached to this persona.");
+      return;
+    }
+
+    const shouldRebuild = window.confirm(
+      "AI-generated fields will replace the current fields in the review screen, but nothing will be saved until you click Save Persona.",
+    );
+
+    if (!shouldRebuild) {
+      return;
+    }
+
+    setDetailsRebuildError("");
+    setSelectedPersona(null);
+    setBuildReviewError("");
+    setBuildReviewFormData({
+      display_name: persona.display_name,
+      email: persona.email,
+      phone: persona.phone ?? "",
+      professional_title: persona.professional_title ?? "",
+      target_role: persona.target_role ?? "",
+      skills: persona.skills ?? "",
+      experience_summary: persona.experience_summary ?? "",
+    });
+    setAutoBuildReviewOnOpen(true);
+    setPersonaToBuild(persona);
   }
 
   function handleInputChange(
@@ -547,7 +585,7 @@ export default function PersonasPage() {
     setSelectedPersona((current) =>
       current?.id === persona.id ? null : current,
     );
-    setDraftPersonaToBuild((current) =>
+    setPersonaToBuild((current) =>
       current?.id === persona.id ? null : current,
     );
     setPersonas((current) => current.filter((item) => item.id !== persona.id));
@@ -555,13 +593,13 @@ export default function PersonasPage() {
   }
 
   async function handleBuildWithAi() {
-    if (!draftPersonaToBuild) {
-      setBuildReviewError("No draft persona is available to analyze.");
+    if (!personaToBuild) {
+      setBuildReviewError("No persona is available to analyze.");
       return;
     }
 
-    if (!draftPersonaToBuild.cv_file_path) {
-      setBuildReviewError("No CV is attached to this draft persona.");
+    if (!personaToBuild.cv_file_path) {
+      setBuildReviewError("No CV is attached to this persona.");
       return;
     }
 
@@ -579,9 +617,9 @@ export default function PersonasPage() {
 
     try {
       console.log("Analyze CV request:", {
-        persona_id: draftPersonaToBuild.id,
-        cv_file_path: draftPersonaToBuild.cv_file_path,
-        cv_file_name: draftPersonaToBuild.cv_file_name,
+        persona_id: personaToBuild.id,
+        cv_file_path: personaToBuild.cv_file_path,
+        cv_file_name: personaToBuild.cv_file_name,
       });
 
       const response = await fetch("/api/analyze-cv", {
@@ -591,8 +629,8 @@ export default function PersonasPage() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          persona_id: draftPersonaToBuild.id,
-          cv_file_path: draftPersonaToBuild.cv_file_path,
+          persona_id: personaToBuild.id,
+          cv_file_path: personaToBuild.cv_file_path,
         }),
       });
 
@@ -647,7 +685,7 @@ export default function PersonasPage() {
   async function handleBuildReviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!user || !draftPersonaToBuild) {
+    if (!user || !personaToBuild) {
       setBuildReviewError("You must be logged in to save this persona.");
       return;
     }
@@ -674,7 +712,7 @@ export default function PersonasPage() {
     const { error } = await supabase
       .from("personas")
       .update(updates)
-      .eq("id", draftPersonaToBuild.id)
+      .eq("id", personaToBuild.id)
       .eq("user_id", user.id);
 
     if (error) {
@@ -688,7 +726,7 @@ export default function PersonasPage() {
 
     setPersonas((current) =>
       current.map((persona) =>
-        persona.id === draftPersonaToBuild.id
+        persona.id === personaToBuild.id
           ? {
               ...persona,
               ...updates,
@@ -1097,16 +1135,19 @@ export default function PersonasPage() {
         onClose={closePersonaDetails}
         onEdit={openEditForm}
         onDelete={handleDelete}
+        onRebuildWithAi={openBuildReviewForPersona}
         onUploadCv={handleUploadCv}
         isUploadingCv={isUploadingCv}
+        rebuildError={detailsRebuildError}
       />
 
       <PersonaBuildReviewModal
-        persona={draftPersonaToBuild}
+        persona={personaToBuild}
         formData={buildReviewFormData}
         isSaving={isSaving}
         isAnalyzing={isAnalyzingCv}
         errorMessage={buildReviewError}
+        autoBuildOnOpen={autoBuildReviewOnOpen}
         onClose={closeBuildReviewModal}
         onChange={handleBuildReviewInputChange}
         onBuildWithAi={handleBuildWithAi}

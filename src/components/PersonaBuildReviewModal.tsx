@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
 
@@ -21,6 +21,7 @@ type PersonaBuildReviewModalProps = {
   isSaving: boolean;
   isAnalyzing: boolean;
   errorMessage: string;
+  autoBuildOnOpen?: boolean;
   onClose: () => void;
   onChange: (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -136,6 +137,7 @@ export default function PersonaBuildReviewModal({
   isSaving,
   isAnalyzing,
   errorMessage,
+  autoBuildOnOpen = false,
   onClose,
   onChange,
   onBuildWithAi,
@@ -144,6 +146,8 @@ export default function PersonaBuildReviewModal({
   const [localIsAnalyzing, setLocalIsAnalyzing] = useState(false);
   const [localMessage, setLocalMessage] = useState("");
   const [localError, setLocalError] = useState("");
+  const autoBuildStartedForPersonaRef = useRef<string | null>(null);
+  const handleBuildWithAiClickRef = useRef<() => Promise<void>>(async () => {});
   const isBusy = isAnalyzing || localIsAnalyzing;
 
   function applyAnalysisFields(result: PersonaCvAnalysisResponse) {
@@ -189,12 +193,13 @@ export default function PersonaBuildReviewModal({
     setLocalMessage("");
 
     if (!persona || !isPdfPersonaCv(persona)) {
+      setLocalMessage("Building persona with AI...");
       onBuildWithAi();
       return;
     }
 
     if (!persona.cv_file_path) {
-      setLocalError("No CV is attached to this draft persona.");
+      setLocalError("No CV is attached to this persona.");
       return;
     }
 
@@ -208,6 +213,7 @@ export default function PersonaBuildReviewModal({
     }
 
     setLocalIsAnalyzing(true);
+    setLocalMessage("Building persona with AI...");
 
     try {
       console.info("[browser-ocr] build-with-ai clicked", {
@@ -299,6 +305,24 @@ export default function PersonaBuildReviewModal({
     }
   }
 
+  useEffect(() => {
+    handleBuildWithAiClickRef.current = handleBuildWithAiClick;
+  });
+
+  useEffect(() => {
+    if (!autoBuildOnOpen || !persona) {
+      autoBuildStartedForPersonaRef.current = null;
+      return;
+    }
+
+    if (autoBuildStartedForPersonaRef.current === persona.id) {
+      return;
+    }
+
+    autoBuildStartedForPersonaRef.current = persona.id;
+    void handleBuildWithAiClickRef.current();
+  }, [autoBuildOnOpen, persona]);
+
   return (
     <div
       className={`fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/40 px-6 backdrop-blur-sm transition-all duration-300 ${
@@ -319,9 +343,15 @@ export default function PersonaBuildReviewModal({
           <>
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
               <div>
-                <p className="text-sm text-slate-500">Draft persona</p>
+                <p className="text-sm text-slate-500">
+                  {persona.build_status === "cv_draft"
+                    ? "Draft persona"
+                    : "Persona review"}
+                </p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  Build Persona from CV
+                  {persona.build_status === "cv_draft"
+                    ? "Build Persona from CV"
+                    : "Rebuild Persona from CV"}
                 </h2>
               </div>
 
