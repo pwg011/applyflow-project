@@ -129,9 +129,9 @@ async function verifyUploadedCvSize(path: string, expectedSize: number) {
   const allowedDifference = Math.max(2048, Math.round(expectedSize * 0.05));
 
   console.log("Uploaded CV verification:", {
-    path,
     expectedSize,
     storedSize,
+    contentType: data.type || "unknown",
   });
 
   if (Math.abs(storedSize - expectedSize) > allowedDifference) {
@@ -616,12 +616,6 @@ export default function PersonasPage() {
     setIsAnalyzingCv(true);
 
     try {
-      console.log("Analyze CV request:", {
-        persona_id: personaToBuild.id,
-        cv_file_path: personaToBuild.cv_file_path,
-        cv_file_name: personaToBuild.cv_file_name,
-      });
-
       const response = await fetch("/api/analyze-cv", {
         method: "POST",
         headers: {
@@ -659,8 +653,6 @@ export default function PersonasPage() {
         throw new Error("The CV analysis response was incomplete.");
       }
 
-      console.log("Analyze CV response:", responseBody);
-
       setBuildReviewFormData({
         display_name: responseBody.display_name ?? "",
         email: responseBody.email ?? "",
@@ -674,7 +666,6 @@ export default function PersonasPage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not analyze this CV.";
-      console.log("Analyze CV response:", { error: message });
       setBuildReviewError(message);
       showToast(message, "error");
     } finally {
@@ -757,10 +748,8 @@ export default function PersonasPage() {
     const contentType = getCvContentType(file);
 
     console.log("Uploading CV file:", {
-      name: file.name,
       size: file.size,
       type: file.type,
-      path: filePath,
     });
 
     const { error: uploadError } = await supabase.storage
@@ -860,10 +849,8 @@ export default function PersonasPage() {
     const contentType = getCvContentType(file);
 
     console.log("Uploading draft CV file:", {
-      name: file.name,
       size: file.size,
       type: file.type,
-      path: filePath,
     });
 
     const { error: uploadError } = await supabase.storage

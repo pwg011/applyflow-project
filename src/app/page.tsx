@@ -552,7 +552,6 @@ export default function Home() {
     }
 
     await fetchApplications();
-    console.log("Imported job application created:", applicationData);
     showToast("Application saved", "success");
     closeImportPreview();
     setIsSaving(false);
@@ -624,10 +623,6 @@ export default function Home() {
       }
 
       await fetchApplications();
-      console.log("Job application updated:", {
-        id: editingId,
-        ...applicationData,
-      });
       setSelectedApplicationId(editingId);
       showToast("Application updated", "success");
     } else {
@@ -655,7 +650,6 @@ export default function Home() {
       }
 
       await fetchApplications();
-      console.log("Job application created:", applicationData);
       showToast("Application saved", "success");
     }
 
