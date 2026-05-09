@@ -944,9 +944,9 @@ export default function Home() {
       </header>
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Dashboard
+        <div className="mb-4 sm:mb-8">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Your applications
           </h2>
         </div>
 
@@ -982,13 +982,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-5 flex flex-col gap-3 sm:mt-8 sm:flex-row">
           <input
             type="text"
             placeholder="Search by company or role..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-400 sm:py-3"
           />
 
           <select
@@ -996,7 +996,7 @@ export default function Home() {
             onChange={(event) =>
               setStatusFilter(event.target.value as StatusFilter)
             }
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-400 sm:py-3"
           >
             <option value="All">All</option>
             <option>Applied</option>
@@ -1007,24 +1007,24 @@ export default function Home() {
         </div>
 
         {isLoading ? (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-10 text-center">
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center sm:mt-8">
             <p className="text-sm text-slate-500">Loading applications...</p>
           </div>
         ) : applications.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center sm:mt-8">
             <h3 className="text-lg font-medium">No applications yet</h3>
             <p className="mt-2 text-sm text-slate-500">
               Click the plus button to add your first job application.
             </p>
           </div>
         ) : filteredApplications.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center sm:mt-8">
             <h3 className="text-lg font-medium">
               No matching applications found
             </h3>
           </div>
         ) : (
-          <div className="mt-8 space-y-4">
+          <div className="mt-6 space-y-4 sm:mt-8">
             {filteredApplications.map((application) => (
               <ApplicationCard
                 key={application.id}
