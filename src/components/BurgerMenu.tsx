@@ -8,8 +8,8 @@ type BurgerMenuProps = {
 };
 
 const navigationItems = [
-  { href: "/", label: "Applications" },
-  { href: "/personas", label: "Personas" },
+  { href: "/", label: "Jobs" },
+  { href: "/personas", label: "Profiles" },
 ];
 
 export default function BurgerMenu({

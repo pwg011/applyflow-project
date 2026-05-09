@@ -8,6 +8,7 @@ import PersonaDetailsModal from "@/components/PersonaDetailsModal";
 import PersonaForm from "@/components/PersonaForm";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import SegmentedSwitch from "@/components/SegmentedSwitch";
 import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
 import { usePathname } from "next/navigation";
@@ -940,7 +941,7 @@ export default function PersonasPage() {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
         <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Personas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
           <p className="mt-2 text-sm text-slate-500">Loading session...</p>
         </div>
       </main>
@@ -951,7 +952,7 @@ export default function PersonasPage() {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
         <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Personas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
           <p className="mt-2 text-sm text-slate-500">
             Sign in to view and manage your personas.
           </p>
@@ -982,7 +983,7 @@ export default function PersonasPage() {
 
           <div className="min-w-0 flex-1 px-3 text-center">
             <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Personas
+              Profiles
             </h1>
           </div>
 
@@ -997,7 +998,7 @@ export default function PersonasPage() {
                 <span aria-hidden="true" className="text-base leading-none">
                   +
                 </span>
-                Create Persona
+                Create Profile
               </button>
 
               <PlusActionMenu
@@ -1028,6 +1029,10 @@ export default function PersonasPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <div className="mb-4 sm:mb-6">
+          <SegmentedSwitch active="profiles" />
+        </div>
+
         <div className="mb-8">
           <p className="text-sm text-slate-500">
             Build reusable professional personas for future AI-assisted workflows.

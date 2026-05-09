@@ -9,6 +9,7 @@ import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal from "@/components/ImportPreviewModal";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import SegmentedSwitch from "@/components/SegmentedSwitch";
 import { supabase } from "@/lib/supabaseClient";
 import ApplicationCard from "@/components/ApplicationCard";
 import { usePathname } from "next/navigation";
@@ -895,7 +896,7 @@ export default function Home() {
 
           <div className="min-w-0 flex-1 px-3 text-center">
             <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Applications
+              Jobs
             </h1>
           </div>
 
@@ -944,10 +945,8 @@ export default function Home() {
       </header>
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-4 sm:mb-8">
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Your applications
-          </h2>
+        <div className="mb-4 sm:mb-6">
+          <SegmentedSwitch active="jobs" />
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
