@@ -12,7 +12,7 @@ export default function ProfileDropdown({
   return (
     <div
       className={`absolute right-0 top-full z-[53] mt-3 w-44 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl transition-all duration-200 ease-out ${
-        isOpenk
+        isOpen
           ? "pointer-events-auto scale-100 opacity-100"
           : "pointer-events-none scale-95 opacity-0"
       }`}

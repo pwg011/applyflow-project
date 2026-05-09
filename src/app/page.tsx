@@ -879,13 +879,13 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div ref={burgerMenuRef} className="relative">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+          <div ref={burgerMenuRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => setIsBurgerMenuOpen((current) => !current)}
               aria-label="Open navigation menu"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
             >
               {"\u2630"}
             </button>
@@ -893,22 +893,24 @@ export default function Home() {
             <BurgerMenu isOpen={isBurgerMenuOpen} currentPath={pathname} />
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-slate-500">ApplyFlow</p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+          <div className="min-w-0 flex-1 px-3 text-center">
+            <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
               Applications
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <div ref={addMenuRef} className="relative">
               <button
                 type="button"
                 onClick={openNewApplicationPanel}
-                aria-label="Open add application panel"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-xl leading-none shadow-sm hover:bg-slate-50"
+                aria-label="Open job import menu"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
               >
-                +
+                <span aria-hidden="true" className="text-base leading-none">
+                  +
+                </span>
+                Import Job
                 {hasDraftData ? (
                   <span className="absolute right-0 top-0 flex h-4 w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white animate-pulse">
                     !
@@ -927,7 +929,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen((current) => !current)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
               >
                 P
               </button>
@@ -941,33 +943,42 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <p className="text-sm text-slate-500">Dashboard</p>
-          <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-            Job Applications
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Dashboard
           </h2>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Total Applications</p>
-            <p className="mt-3 text-3xl font-semibold">{totalApplications}</p>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <p className="text-xs text-slate-500 sm:text-sm">
+              Total Applications
+            </p>
+            <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+              {totalApplications}
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Interviews</p>
-            <p className="mt-3 text-3xl font-semibold">{interviewsCount}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <p className="text-xs text-slate-500 sm:text-sm">Interviews</p>
+            <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+              {interviewsCount}
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Offers</p>
-            <p className="mt-3 text-3xl font-semibold">{offersCount}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <p className="text-xs text-slate-500 sm:text-sm">Offers</p>
+            <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+              {offersCount}
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Rejections</p>
-            <p className="mt-3 text-3xl font-semibold">{rejectionsCount}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <p className="text-xs text-slate-500 sm:text-sm">Rejections</p>
+            <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">
+              {rejectionsCount}
+            </p>
           </div>
         </div>
 

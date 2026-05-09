@@ -963,13 +963,13 @@ export default function PersonasPage() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div ref={burgerMenuRef} className="relative">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+          <div ref={burgerMenuRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => setIsBurgerMenuOpen((current) => !current)}
               aria-label="Open navigation menu"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
             >
               ☰
             </button>
@@ -980,19 +980,19 @@ export default function PersonasPage() {
             />
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-slate-500">ApplyFlow</p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+          <div className="min-w-0 flex-1 px-3 text-center">
+            <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
               Personas
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <div ref={createMenuRef} className="relative">
               <button
                 type="button"
                 onClick={handleOpenCreateMenu}
-                className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+                aria-label="Open persona create menu"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
               >
                 <span aria-hidden="true" className="text-base leading-none">
                   +
@@ -1013,7 +1013,7 @@ export default function PersonasPage() {
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen((current) => !current)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
               >
                 P
               </button>
@@ -1027,7 +1027,7 @@ export default function PersonasPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <p className="text-sm text-slate-500">
             Build reusable professional personas for future AI-assisted workflows.
