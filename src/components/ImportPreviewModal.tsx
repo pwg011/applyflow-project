@@ -110,7 +110,7 @@ export default function ImportPreviewModal({
               type="button"
               onClick={onCancel}
               aria-label="Close import preview"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
               X
             </button>
@@ -191,7 +191,7 @@ export default function ImportPreviewModal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
             <button
               type="button"
               onClick={onCancel}
@@ -200,14 +200,19 @@ export default function ImportPreviewModal({
               Cancel
             </button>
 
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={isSaving}
-              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSaving ? "Saving..." : "Save Application"}
-            </button>
+            <div className="sm:text-right">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={isSaving}
+                className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              >
+                {isSaving ? "Saving..." : "Save job"}
+              </button>
+              <p className="mt-2 text-xs text-slate-500">
+                Saved jobs appear in your Jobs list.
+              </p>
+            </div>
           </div>
         </div>
       </div>
