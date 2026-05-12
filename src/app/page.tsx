@@ -7,11 +7,12 @@ import BurgerMenu from "@/components/BurgerMenu";
 import DeleteApplicationModal from "@/components/DeleteApplicationModal";
 import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal from "@/components/ImportPreviewModal";
-import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import SegmentedSwitch from "@/components/SegmentedSwitch";
 import { supabase } from "@/lib/supabaseClient";
 import ApplicationCard from "@/components/ApplicationCard";
+import ImportJobCard from "@/components/jobs/ImportJobCard";
+import JobsMobileHeader from "@/components/jobs/JobsMobileHeader";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import type { Application } from "@/types/application";
@@ -75,7 +76,6 @@ const initialFormData = {
 } satisfies FormData;
 
 export default function Home() {
-  const addMenuRef = useRef<HTMLDivElement | null>(null);
   const burgerMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
@@ -84,7 +84,6 @@ export default function Home() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authMessage, setAuthMessage] = useState("");
-  const [isAddOptionModalOpen, setIsAddOptionModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [isDraftPromptOpen, setIsDraftPromptOpen] = useState(false);
@@ -143,6 +142,7 @@ export default function Home() {
       (formData.dateApplied.trim() !== "" &&
         formData.dateApplied !== formatTodayForDisplay()) ||
       formData.notes.trim() !== "");
+  const userInitial = user?.email?.trim().charAt(0).toUpperCase() || "P";
 
   function logSupabaseError(
     action: string,
@@ -318,28 +318,6 @@ export default function Home() {
   }, [toast]);
 
   useEffect(() => {
-    if (!isAddOptionModalOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!addMenuRef.current) {
-        return;
-      }
-
-      if (!addMenuRef.current.contains(event.target as Node)) {
-        closeAddOptionModal();
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isAddOptionModalOpen]);
-
-  useEffect(() => {
     if (!isBurgerMenuOpen) {
       return;
     }
@@ -383,24 +361,6 @@ export default function Home() {
     };
   }, [isProfileMenuOpen]);
 
-  function openNewApplicationPanel() {
-    if (editingId === null && hasDraftData) {
-      setIsDraftPromptOpen(true);
-      return;
-    }
-
-    setIsAddOptionModalOpen(true);
-  }
-
-  function openBlankApplicationPanel() {
-    setEditingId(null);
-    setFormData({
-      ...initialFormData,
-      dateApplied: formatTodayForDisplay(),
-    });
-    setIsPanelOpen(true);
-  }
-
   function closePanel() {
     if (editingId !== null) {
       setEditingId(null);
@@ -412,10 +372,6 @@ export default function Home() {
 
   function clearForm() {
     setFormData(initialFormData);
-  }
-
-  function closeAddOptionModal() {
-    setIsAddOptionModalOpen(false);
   }
 
   function closeImportModal() {
@@ -445,13 +401,7 @@ export default function Home() {
     setIsDraftPromptOpen(false);
   }
 
-  function handleAddManually() {
-    closeAddOptionModal();
-    openBlankApplicationPanel();
-  }
-
   function handleOpenImportModal() {
-    closeAddOptionModal();
     setEditingId(null);
     setFormData(initialFormData);
     setIsImportModalOpen(true);
@@ -879,72 +829,26 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-          <div ref={burgerMenuRef} className="relative shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsBurgerMenuOpen((current) => !current)}
-              aria-label="Open navigation menu"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
-            >
-              {"\u2630"}
-            </button>
+      <JobsMobileHeader
+        userInitial={userInitial}
+        onMenuClick={() => setIsBurgerMenuOpen((current) => !current)}
+        onProfileClick={() => setIsProfileMenuOpen((current) => !current)}
+        menuRef={burgerMenuRef}
+        profileRef={profileMenuRef}
+        menuSlot={<BurgerMenu isOpen={isBurgerMenuOpen} currentPath={pathname} />}
+        profileSlot={
+          <ProfileDropdown onLogout={handleLogout} isOpen={isProfileMenuOpen} />
+        }
+      />
 
-            <BurgerMenu isOpen={isBurgerMenuOpen} currentPath={pathname} />
-          </div>
-
-          <div className="min-w-0 flex-1 px-3 text-center">
-            <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Jobs
-            </h1>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3">
-            <div ref={addMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={openNewApplicationPanel}
-                aria-label="Open job import menu"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-              >
-                <span aria-hidden="true" className="text-base leading-none">
-                  +
-                </span>
-                Import Job
-                {hasDraftData ? (
-                  <span className="absolute right-0 top-0 flex h-4 w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white animate-pulse">
-                    !
-                  </span>
-                ) : null}
-              </button>
-
-              <PlusActionMenu
-                isOpen={isAddOptionModalOpen}
-                onAddManual={handleAddManually}
-                onImport={handleOpenImportModal}
-              />
-            </div>
-
-            <div ref={profileMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setIsProfileMenuOpen((current) => !current)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-              >
-                P
-              </button>
-
-              <ProfileDropdown
-                onLogout={handleLogout}
-                isOpen={isProfileMenuOpen}
-              />
-            </div>
-          </div>
+      <section className="mx-auto max-w-6xl px-5 pb-8 sm:px-6 sm:pt-4">
+        <div className="mb-8 sm:mb-6">
+          <ImportJobCard
+            onClick={handleOpenImportModal}
+            showDraftIndicator={hasDraftData}
+          />
         </div>
-      </header>
 
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-4 sm:mb-6">
           <SegmentedSwitch active="jobs" />
         </div>
