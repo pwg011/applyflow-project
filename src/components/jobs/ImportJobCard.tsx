@@ -14,9 +14,9 @@ export default function ImportJobCard({
       type="button"
       onClick={onClick}
       aria-label="Import job"
-      className="relative flex min-h-[64px] w-full items-center gap-3 rounded-[22px] bg-[#061449] px-[18px] py-3 text-left text-white shadow-sm transition hover:bg-[#0b1d5f] focus:outline-none focus:ring-2 focus:ring-[#061449]/30 focus:ring-offset-2 sm:rounded-2xl sm:px-5 sm:py-5"
+      className="relative flex min-h-[52px] w-full items-center gap-2.5 rounded-[14px] bg-[#061449] px-3 py-2 text-left text-white shadow-sm transition hover:bg-[#0b1d5f] focus:outline-none focus:ring-2 focus:ring-[#061449]/30 focus:ring-offset-2"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#07133d] sm:h-12 sm:w-12">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#07133d]">
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
@@ -24,7 +24,7 @@ export default function ImportJobCard({
           stroke="currentColor"
           strokeWidth="2.4"
           strokeLinecap="round"
-          className="h-[18px] w-[18px] sm:h-6 sm:w-6"
+          className="h-[14px] w-[14px]"
         >
           <path d="M12 5v14" />
           <path d="M5 12h14" />
@@ -32,10 +32,10 @@ export default function ImportJobCard({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[16px] font-semibold leading-5 tracking-normal sm:text-lg sm:leading-6">
+        <span className="block text-[14px] font-semibold leading-4 tracking-normal">
           Import Job
         </span>
-        <span className="mt-1 block whitespace-nowrap text-xs leading-4 text-slate-300 sm:text-sm sm:leading-5">
+        <span className="mt-1 block whitespace-nowrap text-[10.5px] leading-3 text-slate-300">
           Paste a link, job post or description
         </span>
       </span>
@@ -48,7 +48,7 @@ export default function ImportJobCard({
         strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-[18px] w-[18px] shrink-0 text-white"
+        className="h-4 w-4 shrink-0 text-white"
       >
         <path d="m9 18 6-6-6-6" />
       </svg>
