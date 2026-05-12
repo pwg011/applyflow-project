@@ -25,7 +25,7 @@ export default function JobsMobileHeader({
 
   return (
     <header className="bg-[#f8fafc] px-5 pb-3 pt-4 sm:bg-white sm:px-6 sm:py-4">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2.5">
         <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
@@ -55,7 +55,7 @@ export default function JobsMobileHeader({
           <h1 className="text-[34px] font-semibold leading-none tracking-normal text-[#07133d] sm:text-2xl">
             Jobs
           </h1>
-          <p className="mt-1.5 text-base leading-5 text-slate-500 sm:mt-1 sm:text-sm">
+          <p className="mt-1.5 whitespace-nowrap text-[15px] leading-5 text-slate-500 sm:mt-1 sm:text-sm">
             Track and prepare your applications
           </p>
         </div>

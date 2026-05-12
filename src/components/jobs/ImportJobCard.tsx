@@ -14,7 +14,7 @@ export default function ImportJobCard({
       type="button"
       onClick={onClick}
       aria-label="Import job"
-      className="relative flex min-h-[96px] w-full items-center gap-4 rounded-[1.35rem] bg-[#061449] px-5 py-4 text-left text-white shadow-sm transition hover:bg-[#0b1d5f] focus:outline-none focus:ring-2 focus:ring-[#061449]/30 focus:ring-offset-2 sm:rounded-2xl sm:px-5 sm:py-5"
+      className="relative flex min-h-[96px] w-full items-center gap-3 rounded-[1.35rem] bg-[#061449] px-5 py-4 text-left text-white shadow-sm transition hover:bg-[#0b1d5f] focus:outline-none focus:ring-2 focus:ring-[#061449]/30 focus:ring-offset-2 sm:rounded-2xl sm:px-5 sm:py-5"
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#07133d] sm:h-12 sm:w-12">
         <svg
@@ -35,7 +35,7 @@ export default function ImportJobCard({
         <span className="block text-xl font-semibold leading-6 tracking-normal sm:text-lg sm:leading-6">
           Import Job
         </span>
-        <span className="mt-1 block text-base leading-5 text-slate-300 sm:text-sm sm:leading-5">
+        <span className="mt-1 block whitespace-nowrap text-[15px] leading-5 text-slate-300 sm:text-sm sm:leading-5">
           Paste a link, job post or description
         </span>
       </span>
