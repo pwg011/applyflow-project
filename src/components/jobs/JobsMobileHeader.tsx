@@ -24,7 +24,7 @@ export default function JobsMobileHeader({
   const initial = userInitial.trim().charAt(0).toUpperCase() || "P";
 
   return (
-    <header className="bg-[#f8fafc] px-5 pb-4 pt-5 sm:bg-white sm:px-6 sm:py-4">
+    <header className="bg-[#f8fafc] px-5 pb-3 pt-4 sm:bg-white sm:px-6 sm:py-4">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
         <div ref={menuRef} className="relative shrink-0">
           <button
@@ -52,10 +52,10 @@ export default function JobsMobileHeader({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[36px] font-semibold leading-none tracking-normal text-[#07133d] sm:text-2xl">
+          <h1 className="text-[34px] font-semibold leading-none tracking-normal text-[#07133d] sm:text-2xl">
             Jobs
           </h1>
-          <p className="mt-2 text-[17px] leading-5 text-slate-500 sm:mt-1 sm:text-sm">
+          <p className="mt-1.5 text-base leading-5 text-slate-500 sm:mt-1 sm:text-sm">
             Track and prepare your applications
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function JobsMobileHeader({
             type="button"
             onClick={onProfileClick}
             aria-label="Open profile menu"
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#061449] text-lg font-medium text-white shadow-sm transition hover:bg-[#0b1d5f] sm:h-11 sm:w-11 sm:text-sm"
+            className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#061449] text-lg font-medium text-white shadow-sm transition hover:bg-[#0b1d5f] sm:h-11 sm:w-11 sm:text-sm"
           >
             {initial}
           </button>
