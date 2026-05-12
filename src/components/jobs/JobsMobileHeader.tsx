@@ -52,7 +52,7 @@ export default function JobsMobileHeader({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-[25px] font-semibold leading-none tracking-normal text-[#07133d] sm:text-2xl">
+          <h1 className="text-[24px] font-semibold leading-none tracking-normal text-[#07133d] sm:text-2xl">
             Jobs
           </h1>
           <p className="mt-1 whitespace-nowrap text-xs leading-4 text-slate-500 sm:mt-1 sm:text-sm">

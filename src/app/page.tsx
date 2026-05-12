@@ -841,7 +841,7 @@ export default function Home() {
         }
       />
 
-      <section className="mx-auto max-w-6xl px-5 pb-8 sm:px-6 sm:pt-4">
+      <section className="mx-auto max-w-6xl px-5 pb-8 pt-2 sm:px-6 sm:pt-4">
         <div className="mb-5 sm:mb-6">
           <ImportJobCard
             onClick={handleOpenImportModal}

@@ -9,14 +9,14 @@ type SegmentedSwitchProps = {
 export default function SegmentedSwitch({ active }: SegmentedSwitchProps) {
   return (
     <nav aria-label="Primary navigation" className="w-full">
-      <div className="inline-flex w-full rounded-2xl border border-slate-200 bg-white p-1 shadow-sm sm:w-auto">
+      <div className="inline-flex min-h-[58px] w-full rounded-2xl border border-slate-200 bg-white px-1 shadow-sm sm:w-auto">
         <Link
           href="/"
           aria-current={active === "jobs" ? "page" : undefined}
-          className={`flex-1 rounded-xl px-4 py-2.5 text-center text-sm font-medium transition sm:flex-none ${
+          className={`flex flex-1 items-center justify-center border-b-2 px-4 text-center text-sm font-medium transition sm:flex-none ${
             active === "jobs"
-              ? "bg-slate-900 text-white"
-              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-700 hover:text-slate-900"
           }`}
         >
           Jobs
@@ -24,10 +24,10 @@ export default function SegmentedSwitch({ active }: SegmentedSwitchProps) {
         <Link
           href="/personas"
           aria-current={active === "profiles" ? "page" : undefined}
-          className={`ml-1 flex-1 rounded-xl px-4 py-2.5 text-center text-sm font-medium transition sm:flex-none ${
+          className={`ml-1 flex flex-1 items-center justify-center border-b-2 px-4 text-center text-sm font-medium transition sm:flex-none ${
             active === "profiles"
-              ? "bg-slate-900 text-white"
-              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-700 hover:text-slate-900"
           }`}
         >
           Profiles
@@ -36,4 +36,3 @@ export default function SegmentedSwitch({ active }: SegmentedSwitchProps) {
     </nav>
   );
 }
-
