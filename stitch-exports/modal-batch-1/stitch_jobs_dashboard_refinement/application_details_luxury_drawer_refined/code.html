@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ApplyFlow | Application Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1b1b1b",
+                        "outline-subtle": "rgba(199, 198, 202, 0.3)",
+                        "surface-glass-dark": "rgba(26, 26, 27, 0.8)",
+                        "on-background": "#191c1e",
+                        "lume-border": "rgba(255, 255, 255, 0.4)",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container": "#eceef1",
+                        "primary": "#000000",
+                        "on-surface-variant": "#4c4546",
+                        "surface-bright": "#f7f9fc",
+                        "tertiary-fixed-dim": "#b7c7e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-container": "#556379",
+                        "on-tertiary-container": "#75859d",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-primary-container": "#848484",
+                        "surface-tint": "#5e5e5e",
+                        "surface-glass": "rgba(255, 255, 255, 0.4)",
+                        "on-primary-fixed-variant": "#474747",
+                        "success-blue": "#2563eb",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "surface-container-high": "#e6e8eb",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "status-draft": "#b45309",
+                        "primary-fixed": "#e2e2e2",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "inverse-primary": "#c6c6c6",
+                        "surface-container-highest": "#e0e3e6",
+                        "outline": "#7e7576",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#d3e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#0b1c30",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface": "#f7f9fc",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary": "#515f74",
+                        "surface-container-low": "#f2f4f7",
+                        "tertiary": "#000000",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface-dim": "#d8dadd",
+                        "secondary-container": "#d2e1fa",
+                        "background": "#f7f9fc",
+                        "surface-variant": "#e0e3e6",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#0d1c2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-desktop": "48px",
+                        "stack-lg": "32px",
+                        "panel-padding": "24px",
+                        "margin-mobile": "16px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .lume-border-top { border-top: 1px solid rgba(255, 255, 255, 0.4); }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(199, 198, 202, 0.3);
+        }
+        .scale-up:hover { transform: scale(1.02); }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        @keyframes slide-in {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-slide-in { animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background overflow-hidden">
+<!-- Background Layer: Blurred Dashboard -->
+<div class="fixed inset-0 z-0 blur-xl opacity-40 scale-105 pointer-events-none">
+<header class="flex justify-between items-center px-margin-desktop h-16 w-full border-b border-outline-subtle bg-white/50">
+<span class="font-display-lg text-display-lg tracking-tighter text-primary">ApplyFlow</span>
+<div class="flex gap-stack-lg">
+<span class="font-body-md text-body-md text-primary border-b-2 border-primary pb-1">Dashboard</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Applications</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Talent</span>
+</div>
+</header>
+<main class="p-margin-desktop grid grid-cols-12 gap-gutter">
+<div class="col-span-8 space-y-stack-lg">
+<div class="h-64 glass-panel rounded-xl"></div>
+<div class="h-96 glass-panel rounded-xl"></div>
+</div>
+<div class="col-span-4 h-full glass-panel rounded-xl"></div>
+</main>
+</div>
+<!-- Main Navigation (Underlay) -->
+<header class="fixed top-0 w-full z-10 flex justify-between items-center px-margin-desktop h-16 bg-surface-glass dark:bg-surface-glass-dark backdrop-blur-3xl border-b border-lume-border shadow-black/[0.02]">
+<div class="flex items-center gap-stack-md">
+<span class="font-display-lg text-display-lg tracking-tighter text-primary">ApplyFlow</span>
+</div>
+<nav class="hidden md:flex items-center gap-stack-lg h-full">
+<a class="font-body-md text-body-md text-on-surface-variant hover:bg-white/5 transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-primary border-b-2 border-primary pb-1 h-full flex items-center" href="#">Applications</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:bg-white/5 transition-colors" href="#">Talent</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:bg-white/5 transition-colors" href="#">Analytics</a>
+</nav>
+<div class="flex items-center gap-stack-md">
+<button class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-white/10">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-white/10">settings</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img alt="Executive User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSgQkEAU0nAmqJy-RlDYvAnaBmkCfQsYs9iC8W6csT8W93eK6KO1EV5s3-ajaVAxpKGUG9prXIapT6MrbOSFafChMsU-ca5HENPLiprDeOSBfToNMc4btm17wYMW8Tvo7bdA3RsG57h4q-t9eNU87aqT9CMgj02QInA5B5QkXWSEoGQTfhkPldcSWkPkdyM9iqSTwIGB61_6e8pzA3Jg-6VrR36QIlsRAMFbZX3NuFl7eRhpa73kpxIecBdRTkq-DolKM7fq3e29iR"/>
+</div>
+</div>
+</header>
+<!-- Side Drawer Modal -->
+<div class="fixed inset-0 z-[100] flex justify-end">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-black/10 backdrop-blur-md" onclick="this.parentElement.style.display='none'"></div>
+<!-- Drawer Panel -->
+<aside class="relative w-full max-w-2xl h-full glass-panel border-l border-outline-subtle shadow-2xl animate-slide-in flex flex-col">
+<div class="absolute top-0 left-0 w-full h-1 lume-border-top"></div>
+<!-- Header -->
+<div class="px-panel-padding pt-12 pb-8 flex justify-between items-start">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Northstar Labs</h2>
+<p class="font-body-lg text-body-lg text-on-secondary-container mt-1">Product Designer</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/60 transition-colors border border-outline-subtle" onclick="this.closest('.fixed').style.display='none'">
+<span class="material-symbols-outlined text-primary">close</span>
+</button>
+</div>
+<!-- Content Scroll Area -->
+<div class="flex-1 overflow-y-auto px-panel-padding space-y-stack-lg pb-12">
+<!-- Summary Section -->
+<div class="grid grid-cols-2 gap-gutter border-b border-outline-subtle pb-stack-lg">
+<div class="space-y-stack-sm">
+<span class="font-label-caps text-label-caps text-on-tertiary-container uppercase tracking-widest">Status</span>
+<div>
+<span class="inline-flex items-center px-4 py-1.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-label-sm text-label-sm border border-outline-subtle">
+                                Interview
+                            </span>
+</div>
+</div>
+<div class="space-y-stack-sm">
+<span class="font-label-caps text-label-caps text-on-tertiary-container uppercase tracking-widest">Date Applied</span>
+<p class="font-body-md text-body-md font-semibold text-primary">Oct 15, 2026</p>
+</div>
+</div>
+<!-- Info Blocks -->
+<div class="space-y-stack-lg">
+<div class="space-y-stack-sm">
+<span class="font-label-caps text-label-caps text-on-tertiary-container uppercase tracking-widest">Job Link</span>
+<a class="font-body-md text-body-md text-success-blue flex items-center gap-1.5 group w-fit" href="#">
+                            northstarlabs.com/careers/product-designer
+                            <span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">open_in_new</span>
+</a>
+</div>
+<div class="p-panel-padding bg-white/20 rounded-xl border border-white/40 shadow-sm">
+<span class="font-label-caps text-label-caps text-on-tertiary-container uppercase tracking-widest block mb-3">Notes</span>
+<p class="font-body-md text-body-md italic text-on-surface-variant leading-relaxed">
+                            "Portfolio review scheduled for tomorrow morning. Focus on the mobile enterprise dashboard case study. They value clarity over decoration."
+                        </p>
+</div>
+</div>
+<!-- Activity Log Timeline -->
+<div class="space-y-stack-md pt-4">
+<span class="font-label-caps text-label-caps text-on-tertiary-container uppercase tracking-widest">Activity Log</span>
+<div class="relative pl-8 space-y-stack-lg mt-6">
+<!-- Vertical Line -->
+<div class="absolute left-[7px] top-2 bottom-2 w-[1px] bg-outline-subtle"></div>
+<!-- Log Item 1 -->
+<div class="relative">
+<div class="absolute left-[-32px] top-1.5 w-4 h-4 rounded-full bg-primary border-4 border-white shadow-sm ring-1 ring-black/5"></div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-primary">Interview Scheduled</p>
+<p class="font-label-sm text-label-sm text-on-tertiary-container">Oct 20, 2026 • 10:45 AM</p>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="relative">
+<div class="absolute left-[-32px] top-1.5 w-4 h-4 rounded-full bg-outline-variant border-4 border-white shadow-sm ring-1 ring-black/5"></div>
+<div>
+<p class="font-body-md text-body-md font-medium text-on-surface">Technical Screener Passed</p>
+<p class="font-label-sm text-label-sm text-on-tertiary-container">Oct 18, 2026 • 02:30 PM</p>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="relative opacity-60">
+<div class="absolute left-[-32px] top-1.5 w-4 h-4 rounded-full bg-outline-variant border-4 border-white shadow-sm ring-1 ring-black/5"></div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Application Received</p>
+<p class="font-label-sm text-label-sm text-on-tertiary-container">Oct 15, 2026 • 09:00 AM</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Actions Footer -->
+<div class="p-panel-padding bg-white/20 backdrop-blur-xl border-t border-outline-subtle grid grid-cols-2 gap-stack-md">
+<button class="flex items-center justify-center gap-2 px-6 h-12 rounded-full border border-outline text-on-surface font-label-caps text-label-caps hover:bg-white/40 transition-all scale-up">
+<span class="material-symbols-outlined text-sm">edit</span>
+                    Edit Details
+                </button>
+<button class="flex items-center justify-center gap-2 px-6 h-12 rounded-full bg-primary-container text-white font-label-caps text-label-caps shadow-lg hover:shadow-xl transition-all scale-up">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">visibility</span>
+                    View Job
+                </button>
+</div>
+</aside>
+</div>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Application Details drawer rendered.');
+        });
+    </script>
+</body></html>

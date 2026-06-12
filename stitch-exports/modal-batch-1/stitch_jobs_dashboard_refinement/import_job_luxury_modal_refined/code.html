@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ApplyFlow | Premium Import Job</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1b1b1b",
+                        "outline-subtle": "rgba(199, 198, 202, 0.3)",
+                        "surface-glass-dark": "rgba(26, 26, 27, 0.8)",
+                        "on-background": "#191c1e",
+                        "lume-border": "rgba(255, 255, 255, 0.4)",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container": "#eceef1",
+                        "primary": "#000000",
+                        "on-surface-variant": "#4c4546",
+                        "surface-bright": "#f7f9fc",
+                        "tertiary-fixed-dim": "#b7c7e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-container": "#556379",
+                        "on-tertiary-container": "#75859d",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-primary-container": "#848484",
+                        "surface-tint": "#5e5e5e",
+                        "surface-glass": "rgba(255, 255, 255, 0.65)",
+                        "on-primary-fixed-variant": "#474747",
+                        "success-blue": "#2563eb",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "surface-container-high": "#e6e8eb",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "status-draft": "#b45309",
+                        "primary-fixed": "#e2e2e2",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "inverse-primary": "#c6c6c6",
+                        "surface-container-highest": "#e0e3e6",
+                        "outline": "#7e7576",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#d3e3ff",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface": "#f7f9fc",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary": "#515f74",
+                        "surface-container-low": "#f2f4f7",
+                        "tertiary": "#000000",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface-dim": "#d8dadd",
+                        "secondary-container": "#d2e1fa",
+                        "background": "#f7f9fc",
+                        "surface-variant": "#e0e3e6",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "satin-charcoal": "#0F172A"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "8px",
+                        "xl": "16px",
+                        "2xl": "24px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-desktop": "48px",
+                        "stack-lg": "32px",
+                        "panel-padding": "24px",
+                        "margin-mobile": "16px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-caps": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .lume-border-top {
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .premium-shadow {
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.06), 0 18px 36px -18px rgba(0, 0, 0, 0.08);
+        }
+        .scale-up:hover {
+            transform: translateY(-1px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::placeholder {
+            color: #94a3b8 !important;
+            opacity: 0.8 !important;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface overflow-hidden">
+<!-- Background Layer: Blurred Jobs Dashboard -->
+<div class="fixed inset-0 z-0 blur-[24px] opacity-30 scale-105 pointer-events-none">
+<header class="flex justify-between items-center px-12 h-16 w-full border-b border-outline-subtle bg-white">
+<div class="font-display-lg text-headline-md tracking-tighter text-primary">ApplyFlow</div>
+<div class="flex gap-6">
+<span class="w-24 h-4 bg-surface-container rounded"></span>
+<span class="w-24 h-4 bg-surface-container rounded"></span>
+<span class="w-24 h-4 bg-surface-container rounded"></span>
+</div>
+</header>
+<main class="p-12 space-y-8">
+<div class="flex justify-between items-center">
+<div class="w-64 h-10 bg-surface-container-high rounded-full"></div>
+<div class="w-32 h-10 bg-primary rounded-full"></div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-8 space-y-6">
+<div class="h-64 bg-white rounded-xl shadow-sm border border-outline-subtle"></div>
+<div class="h-48 bg-white rounded-xl shadow-sm border border-outline-subtle"></div>
+</div>
+<div class="col-span-4 space-y-6">
+<div class="h-full bg-white rounded-xl shadow-sm border border-outline-subtle"></div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-white/10 backdrop-blur-[6px] px-4">
+<!-- Premium Glass Modal -->
+<div class="glass-panel premium-shadow lume-border-top w-full max-w-[560px] rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-500 ease-out relative">
+<!-- Close Button (Absolute) -->
+<button class="absolute top-8 right-8 text-on-surface-variant/60 hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<!-- Modal Content -->
+<div class="p-8 md:p-12 space-y-10">
+<!-- Header -->
+<div class="space-y-3">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Import Job</h1>
+<p class="text-on-surface-variant/80 font-body-md text-lg leading-relaxed">
+                        Paste a link, job post or description to get started.
+                    </p>
+</div>
+<!-- Input Area -->
+<div class="space-y-5">
+<div class="group relative">
+<textarea class="w-full bg-[#f8fafc]/60 border border-slate-200/50 rounded-xl p-6 font-body-md text-on-surface placeholder:text-slate-400 focus:ring-0 focus:border-slate-300 transition-all resize-none min-h-[220px] shadow-inner" placeholder="https://company.com/careers/engineer-role... or paste the full job description here"></textarea>
+</div>
+<!-- Refined Hint/Helper -->
+<div class="flex items-start gap-3 px-1">
+<span class="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">info</span>
+<p class="text-sm text-slate-500 leading-relaxed">
+                            Our AI will automatically extract the company name, job title, and key requirements for you.
+                        </p>
+</div>
+</div>
+<!-- Actions -->
+<div class="space-y-4">
+<button class="w-full bg-satin-charcoal text-white font-medium h-[56px] rounded-full flex items-center justify-center gap-2 scale-up transition-all hover:bg-black group shadow-lg shadow-slate-200">
+<span class="tracking-wide">Import</span>
+<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+<button class="w-full h-12 text-slate-400 font-medium hover:text-primary transition-colors text-sm uppercase tracking-widest">
+                        Cancel
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- UI Interaction Script -->
+<script>
+        // Simple micro-interaction for the textarea focus
+        const textarea = document.querySelector('textarea');
+        const glassPanel = document.querySelector('.glass-panel');
+
+        textarea.addEventListener('focus', () => {
+            glassPanel.classList.add('premium-shadow-intense');
+            textarea.classList.add('bg-white/80', 'border-slate-300');
+        });
+
+        textarea.addEventListener('blur', () => {
+            glassPanel.classList.remove('premium-shadow-intense');
+            textarea.classList.remove('bg-white/80', 'border-slate-300');
+        });
+
+        // Close modal simulation
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(btn.textContent.trim().includes('Cancel') || btn.querySelector('span')?.textContent === 'close') {
+                    const overlay = btn.closest('.fixed.inset-0.z-50');
+                    overlay.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    overlay.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    
+                    setTimeout(() => {
+                        document.querySelector('.z-0').classList.remove('blur-[24px]', 'opacity-30');
+                        document.querySelector('.z-0').classList.add('blur-none', 'opacity-100');
+                    }, 150);
+                }
+            });
+        });
+    </script>
+</body></html>

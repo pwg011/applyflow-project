@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Professional Identity Builder | ApplyFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+        .luminous-border {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .recessed-input {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        @keyframes subtle-glow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+        .animate-glow {
+            animation: subtle-glow 4s ease-in-out infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#7c8498",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#0d1c2d",
+                        "on-secondary-fixed": "#07006c",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#4648d4",
+                        "surface-dim": "#d8dadd",
+                        "on-primary-fixed-variant": "#3f4759",
+                        "surface-bright": "#f7f9fc",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#565e71",
+                        "tertiary-fixed-dim": "#b9c8de",
+                        "secondary-container": "#6063ee",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-surface": "#2d3133",
+                        "surface": "#f7f9fc",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#dbe2f9",
+                        "tertiary-fixed": "#d4e4fa",
+                        "on-primary-fixed": "#141b2c",
+                        "surface-container-low": "#f2f4f7",
+                        "surface-container-highest": "#e0e3e6",
+                        "primary-container": "#141b2c",
+                        "surface-container": "#eceef1",
+                        "on-tertiary-container": "#768599",
+                        "tertiary": "#000000",
+                        "background": "#f7f9fc",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-container": "#fffbff",
+                        "primary": "#000000",
+                        "outline": "#76777d",
+                        "inverse-on-surface": "#eff1f4",
+                        "primary-fixed-dim": "#bfc6dc",
+                        "surface-container-high": "#e6e8eb",
+                        "surface-variant": "#e0e3e6",
+                        "on-surface": "#191c1e",
+                        "on-tertiary-fixed-variant": "#39485a",
+                        "outline-variant": "#c6c6cd",
+                        "on-tertiary-fixed": "#0d1c2d",
+                        "inverse-primary": "#bfc6dc",
+                        "on-secondary-fixed-variant": "#2f2ebe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-padding": "64px",
+                        "unit": "4px",
+                        "element-gap": "16px",
+                        "gutter": "24px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.03em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "label-sm": ["11px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-md": ["15px", {"lineHeight": "1.5", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                        "label-md": ["13px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden antialiased">
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+
+</div>
+<!-- Main Modal Overlay -->
+<main class="fixed inset-0 z-50 flex items-center justify-center p-8 lg:p-12">
+<!-- Professional Identity Builder Container -->
+<section class="relative w-full max-w-6xl h-full max-h-[850px] flex bg-white/70 glass-panel rounded-xl overflow-hidden shadow-[0_60px_60px_rgba(0,0,0,0.1)] border border-white/40 ring-1 ring-black/5">
+<!-- Left Side Identity Preview Panel -->
+<aside class="w-1/3 h-full bg-surface-container-low/40 border-r border-white/20 p-container-margin flex flex-col justify-between items-center text-center">
+<div class="w-full space-y-element-gap mt-8">
+<div class="relative mx-auto w-32 h-32 lg:w-40 lg:h-40">
+<div class="absolute inset-0 rounded-full bg-primary/5 animate-pulse"></div>
+<div class="relative w-full h-full rounded-full border-2 border-white/60 shadow-xl overflow-hidden bg-gradient-to-br from-secondary-fixed to-secondary-fixed-dim flex items-center justify-center group cursor-pointer">
+<span class="font-display-lg text-primary text-4xl lg:text-5xl tracking-tighter">JD</span>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white">photo_camera</span>
+</div>
+</div>
+</div>
+<div class="space-y-1">
+<h2 class="font-headline-md text-headline-md text-primary">Identity Preview</h2>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Executive Level</p>
+</div>
+<!-- Profile Strength Indicator -->
+<div class="w-full pt-8 px-6 space-y-4">
+<div class="flex justify-between items-center px-1">
+<span class="font-label-md text-label-md text-on-surface-variant">Profile Strength</span>
+<span class="font-label-md text-label-md text-secondary">35%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[35%] shadow-[0_0_12px_rgba(70,72,212,0.4)] transition-all duration-1000"></div>
+</div>
+<p class="font-body-md text-label-sm text-on-surface-variant italic">Complete "Executive Narrative" to reach Silver tier status.</p>
+</div>
+</div>
+<div class="w-full px-6 mb-12">
+<div class="p-4 rounded-lg bg-white/30 border border-white/40 flex items-center gap-4 text-left">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<div>
+<p class="font-label-md text-primary">Smart Validation</p>
+<p class="font-label-sm text-on-surface-variant">Identity verified via LinkedIn</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Form Area -->
+<div class="flex-1 h-full overflow-y-auto px-12 py-10 pb-32">
+<div class="max-w-2xl mx-auto space-y-12">
+<!-- Section: Personal Foundation -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">person_outline</span>
+<h3 class="font-headline-md text-headline-md tracking-tight">Personal Foundation</h3>
+</div>
+<div class="grid grid-cols-2 gap-gutter">
+<div class="space-y-2">
+<label class="font-label-md text-on-surface-variant ml-1">Full Legal Name</label>
+<input class="w-full h-12 px-4 bg-surface-container-low/60 border border-white/20 rounded-lg recessed-input focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/40" placeholder="Johnathan Doe" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-on-surface-variant ml-1">Current Title</label>
+<input class="w-full h-12 px-4 bg-surface-container-low/60 border border-white/20 rounded-lg recessed-input focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/40" placeholder="Chief Strategy Officer" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section: Strategic Goal -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">target</span>
+<h3 class="font-headline-md text-headline-md tracking-tight">Strategic Goal</h3>
+</div>
+<div class="space-y-4">
+<div class="relative group">
+<select class="w-full h-12 px-4 bg-surface-container-low/60 border border-white/20 rounded-lg recessed-input focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all appearance-none cursor-pointer">
+<option>Immediate Executive Transition</option>
+<option>Strategic Board Advisory</option>
+<option>Startup Scalability Guidance</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-3 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<p class="font-body-md text-label-sm text-on-surface-variant/60">This helps us tailor your opportunities to your specific career trajectory.</p>
+</div>
+</section>
+<!-- Section: Core Competencies -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">pentagon</span>
+<h3 class="font-headline-md text-headline-md tracking-tight">Core Competencies</h3>
+</div>
+<div class="flex flex-wrap gap-3">
+<!-- Refined dark glass chips -->
+<div class="px-4 py-2 bg-primary-container text-on-primary-fixed border border-white/10 rounded-full flex items-center gap-2 shadow-lg group cursor-pointer hover:bg-primary-container/90 transition-all">
+<span class="font-label-md">Crisis Management</span>
+<span class="material-symbols-outlined text-[16px] opacity-40 group-hover:opacity-100">close</span>
+</div>
+<div class="px-4 py-2 bg-primary-container text-on-primary-fixed border border-white/10 rounded-full flex items-center gap-2 shadow-lg group cursor-pointer hover:bg-primary-container/90 transition-all">
+<span class="font-label-md">M&amp;A Strategy</span>
+<span class="material-symbols-outlined text-[16px] opacity-40 group-hover:opacity-100">close</span>
+</div>
+<div class="px-4 py-2 bg-primary-container text-on-primary-fixed border border-white/10 rounded-full flex items-center gap-2 shadow-lg group cursor-pointer hover:bg-primary-container/90 transition-all">
+<span class="font-label-md">Public Relations</span>
+<span class="material-symbols-outlined text-[16px] opacity-40 group-hover:opacity-100">close</span>
+</div>
+<button class="px-4 py-2 border border-secondary border-dashed rounded-full flex items-center gap-2 text-secondary hover:bg-secondary/5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="font-label-md">Add Competency</span>
+</button>
+</div>
+</section>
+<!-- Section: Executive Narrative -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">auto_awesome</span>
+<h3 class="font-headline-md text-headline-md tracking-tight">Executive Narrative</h3>
+</div>
+<div class="space-y-2">
+<textarea class="w-full p-4 bg-surface-container-low/60 border border-white/20 rounded-lg recessed-input focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/40 resize-none" placeholder="Define your unique leadership philosophy and core value proposition..." rows="5"></textarea>
+<div class="flex justify-end">
+<button class="flex items-center gap-2 text-secondary font-label-md hover:underline transition-all">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+                                    AI Refine Narrative
+                                </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Fixed Bottom Action Area -->
+<footer class="absolute bottom-0 left-0 right-0 h-24 bg-surface-bright/60 glass-panel border-t border-white/30 flex items-center justify-between px-12 z-10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px] animate-pulse">lock</span>
+<span class="font-label-sm uppercase tracking-widest">End-to-End Encrypted</span>
+</div>
+<div class="flex items-center gap-element-gap">
+<button class="px-8 py-3 rounded-lg font-label-md text-primary bg-white/80 hover:bg-white border border-white/20 shadow-sm transition-all active:scale-95">
+                        Cancel
+                    </button>
+<button class="px-10 py-3 rounded-lg font-label-md bg-[#101828] text-white shadow-2xl relative overflow-hidden group active:scale-95 transition-all">
+<div class="absolute inset-x-0 top-0 h-[1px] bg-white/20"></div>
+<span class="relative z-10">Create Profile</span>
+</button>
+</div>
+</footer>
+</section>
+<!-- Exit Action (Hidden shortcut to close) -->
+<button class="fixed top-8 right-8 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-primary border border-white/20 glass-panel transition-all">
+<span class="material-symbols-outlined">close</span>
+</button>
+</main>
+<!-- Background Decorative Element (Right side glow) -->
+<div class="fixed top-1/4 -right-24 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-1/4 -left-24 w-96 h-96 bg-tertiary-fixed/10 blur-[120px] rounded-full pointer-events-none"></div>
+<script>
+        // Subtle interaction for input fields
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.parentElement.classList.add('scale-[1.01]');
+            });
+            el.addEventListener('blur', () => {
+                el.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+    </script>
+</body></html>

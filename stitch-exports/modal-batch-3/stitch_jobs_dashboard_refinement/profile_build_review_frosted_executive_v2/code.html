@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#39485a",
+                        "on-tertiary-container": "#768599",
+                        "on-primary-fixed": "#141b2c",
+                        "tertiary-container": "#0d1c2d",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "background": "#f7f9fc",
+                        "on-tertiary-fixed": "#0d1c2d",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e6",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface-container-high": "#e6e8eb",
+                        "on-surface": "#191c1e",
+                        "outline": "#76777d",
+                        "inverse-surface": "#2d3133",
+                        "secondary": "#4648d4",
+                        "on-primary-fixed-variant": "#3f4759",
+                        "outline-variant": "#c6c6cd",
+                        "on-surface-variant": "#45474c",
+                        "surface-variant": "#e0e3e6",
+                        "tertiary-fixed": "#d4e4fa",
+                        "primary-container": "#141b2c",
+                        "surface-dim": "#d8dadd",
+                        "secondary-container": "#6063ee",
+                        "on-secondary-container": "#fffbff",
+                        "surface-tint": "#565e71",
+                        "primary-fixed": "#dbe2f9",
+                        "tertiary": "#000000",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#e1e0ff",
+                        "primary": "#000000",
+                        "tertiary-fixed-dim": "#b9c8de",
+                        "surface": "#f7f9fc",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef1",
+                        "inverse-primary": "#bfc6dc",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#7c8498",
+                        "on-secondary-fixed": "#07006c",
+                        "primary-fixed-dim": "#bfc6dc",
+                        "surface-container-low": "#f2f4f7",
+                        "surface-bright": "#f7f9fc",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "section-padding": "64px",
+                        "gutter": "24px",
+                        "element-gap": "16px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.03em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                        "body-md": ["15px", {"lineHeight": "1.5", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                        "label-md": ["13px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
+        .glass-sheet {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        .recessed-input {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.01);
+            transition: all 0.3s ease;
+        }
+        .recessed-input:focus {
+            outline: none;
+            border-color: #4648d4;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(70, 72, 212, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: rgba(0, 0, 0, 0.1); 
+            border-radius: 10px; 
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-container-margin overflow-hidden">
+<!-- Global Background Elements -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-fixed/30 blur-[120px] rounded-full"></div>
+<div class="absolute top-[60%] -right-[5%] w-[30%] h-[30%] bg-secondary-fixed/20 blur-[100px] rounded-full"></div>
+</div>
+<!-- Main Side Navigation (Shared Component Context) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest/60 backdrop-blur-2xl border-r border-white/10 flex flex-col p-element-gap z-40 hidden md:flex">
+<div class="flex items-center gap-3 mb-8 px-4">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ApplyFlow</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Executive Suite</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="flex items-center gap-3 bg-primary dark:bg-surface-container-highest text-on-primary dark:text-on-surface rounded-lg px-4 py-2 shadow-lg cursor-pointer transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">filter_list</span>
+<span class="font-label-md text-label-md">Pipeline</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 cursor-pointer transition-all duration-200 hover:translate-x-1">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-label-md">Strategy</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 cursor-pointer transition-all duration-200 hover:translate-x-1">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-label-md text-label-md">Inbox</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 cursor-pointer transition-all duration-200 hover:translate-x-1">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 cursor-pointer transition-all duration-200 hover:translate-x-1">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-label-md text-label-md">Settings</span>
+</div>
+</nav>
+<div class="mt-auto pt-element-gap border-t border-black/5">
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 cursor-pointer transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</div>
+</div>
+</aside>
+<!-- Overlay / Backdrop -->
+<div class="fixed inset-0 bg-surface-dim/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+<!-- Persona Build Review Dialog -->
+<main class="glass-sheet w-full max-w-[800px] h-[921px] max-h-[900px] rounded-[24px] flex flex-col relative overflow-hidden">
+<!-- Close Button -->
+<button class="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center bg-white/50 border border-white/80 hover:bg-white transition-colors z-20">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+</button>
+<!-- Header -->
+<header class="p-8 pb-4">
+<p class="text-[12px] font-bold text-on-tertiary-container uppercase tracking-wider mb-1">Persona review</p>
+<h2 class="font-headline-lg text-headline-lg text-primary">Rebuild Persona from CV</h2>
+</header>
+<!-- Content Area (Scrollable) -->
+<div class="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
+<!-- CV Section -->
+<section class="mb-gutter">
+<label class="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">CV</label>
+<div class="recessed-input rounded-xl p-4 flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[28px]">picture_as_pdf</span>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md font-semibold text-primary">Priya-Ahmed-CV.pdf</h4>
+<p class="text-label-sm text-on-tertiary-container">CV analysis completed. Review the fields before saving.</p>
+</div>
+<button class="px-4 py-2 bg-white/80 border border-black/10 rounded-lg text-label-md font-semibold hover:bg-white transition-colors">Replace CV</button>
+</div>
+</section>
+<div class="space-y-gutter">
+<!-- Personal Foundation -->
+<section>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[18px]">account_circle</span>
+<h3 class="font-headline-md text-headline-md text-primary">Personal Foundation</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-2">
+<label class="block text-label-md text-on-surface-variant font-medium">Display Name</label>
+<input class="recessed-input w-full p-3 rounded-lg font-body-md text-body-md text-on-surface" type="text" value="Priya Ahmed"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-md text-on-surface-variant font-medium">Email</label>
+<input class="recessed-input w-full p-3 rounded-lg font-body-md text-body-md text-on-surface" type="email" value="priya@example.com"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-md text-on-surface-variant font-medium">Phone</label>
+<input class="recessed-input w-full p-3 rounded-lg font-body-md text-body-md text-on-surface" type="text" value="+44 7700 900123"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-md text-on-surface-variant font-medium">Professional Title</label>
+<input class="recessed-input w-full p-3 rounded-lg font-body-md text-body-md text-on-surface" type="text" value="Senior Product Designer"/>
+</div>
+</div>
+</section>
+<!-- Strategic Goal -->
+<section>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[18px]">target</span>
+<h3 class="font-headline-md text-headline-md text-primary">Strategic Goal</h3>
+</div>
+<div class="space-y-2">
+<label class="block text-label-md text-on-surface-variant font-medium">Target Role</label>
+<input class="recessed-input w-full p-3 rounded-lg font-body-md text-body-md text-on-surface" type="text" value="Lead Product Designer"/>
+</div>
+</section>
+<!-- Skills -->
+<section>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[18px]">stars</span>
+<h3 class="font-headline-md text-headline-md text-primary">Skills</h3>
+</div>
+<div class="recessed-input p-4 rounded-xl flex flex-wrap gap-2">
+<div class="px-3 py-1 bg-white/60 border border-black/5 rounded-full text-label-md text-on-surface shadow-sm hover:scale-105 transition-transform cursor-default">Product strategy</div>
+<div class="px-3 py-1 bg-white/60 border border-black/5 rounded-full text-label-md text-on-surface shadow-sm hover:scale-105 transition-transform cursor-default">UX research</div>
+<div class="px-3 py-1 bg-white/60 border border-black/5 rounded-full text-label-md text-on-surface shadow-sm hover:scale-105 transition-transform cursor-default">Interaction design</div>
+<div class="px-3 py-1 bg-white/60 border border-black/5 rounded-full text-label-md text-on-surface shadow-sm hover:scale-105 transition-transform cursor-default">Figma</div>
+<div class="px-3 py-1 bg-white/60 border border-black/5 rounded-full text-label-md text-on-surface shadow-sm hover:scale-105 transition-transform cursor-default">Design systems</div>
+<button class="w-8 h-8 rounded-full border border-dashed border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</section>
+<!-- Experience Summary -->
+<section>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[18px]">history_edu</span>
+<h3 class="font-headline-md text-headline-md text-primary">Experience Summary</h3>
+</div>
+<textarea class="recessed-input w-full p-4 rounded-xl font-body-md text-body-md text-on-surface leading-relaxed" rows="4">Eight years designing B2B SaaS and fintech products, including three years leading cross-functional product teams. Expert in balancing business objectives with high-fidelity user experiences.</textarea>
+</section>
+</div>
+</div>
+<!-- Footer Actions -->
+<footer class="p-6 border-t border-black/5 bg-white/30 backdrop-blur-md flex items-center justify-between">
+<button class="px-6 py-2 text-label-md font-bold text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95">Cancel</button>
+<div class="flex items-center gap-4">
+<button class="px-6 py-3 border border-black/10 rounded-xl text-label-md font-bold text-primary hover:bg-white hover:shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        Build with AI
+                    </button>
+<button class="px-8 py-3 bg-[#101828] text-white rounded-xl text-label-md font-bold shadow-lg shadow-black/20 hover:shadow-xl hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer active:scale-95">
+<span class="relative z-10">Save Persona</span>
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</button>
+</div>
+</footer>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('.recessed-input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.closest('section')?.querySelector('span.material-symbols-outlined')?.classList.add('scale-110', 'text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.closest('section')?.querySelector('span.material-symbols-outlined')?.classList.remove('scale-110', 'text-primary');
+            });
+        });
+    </script>
+</body></html>

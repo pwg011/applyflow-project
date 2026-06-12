@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ApplyFlow | Empty State Collection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#39485a",
+            "on-tertiary-container": "#768599",
+            "on-primary-fixed": "#141b2c",
+            "tertiary-container": "#0d1c2d",
+            "on-secondary-fixed-variant": "#2f2ebe",
+            "background": "#f7f9fc",
+            "on-tertiary-fixed": "#0d1c2d",
+            "on-secondary": "#ffffff",
+            "error": "#ba1a1a",
+            "surface-container-lowest": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-container-highest": "#e0e3e6",
+            "secondary-fixed-dim": "#c0c1ff",
+            "inverse-on-surface": "#eff1f4",
+            "surface-container-high": "#e6e8eb",
+            "on-surface": "#191c1e",
+            "outline": "#76777d",
+            "inverse-surface": "#2d3133",
+            "secondary": "#4648d4",
+            "on-primary-fixed-variant": "#3f4759",
+            "outline-variant": "#c6c6cd",
+            "on-surface-variant": "#45474c",
+            "surface-variant": "#e0e3e6",
+            "tertiary-fixed": "#d4e4fa",
+            "primary-container": "#141b2c",
+            "surface-dim": "#d8dadd",
+            "secondary-container": "#6063ee",
+            "on-secondary-container": "#fffbff",
+            "surface-tint": "#565e71",
+            "primary-fixed": "#dbe2f9",
+            "tertiary": "#000000",
+            "on-error": "#ffffff",
+            "secondary-fixed": "#e1e0ff",
+            "primary": "#000000",
+            "tertiary-fixed-dim": "#b9c8de",
+            "surface": "#f7f9fc",
+            "on-background": "#191c1e",
+            "surface-container": "#eceef1",
+            "inverse-primary": "#bfc6dc",
+            "error-container": "#ffdad6",
+            "on-primary-container": "#7c8498",
+            "on-secondary-fixed": "#07006c",
+            "primary-fixed-dim": "#bfc6dc",
+            "surface-container-low": "#f2f4f7",
+            "surface-bright": "#f7f9fc",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "unit": "4px",
+            "section-padding": "64px",
+            "gutter": "24px",
+            "element-gap": "16px",
+            "container-margin": "40px"
+          },
+          "fontFamily": {
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-lg-mobile": ["Inter"],
+            "label-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+            "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.03em", "fontWeight": "600"}],
+            "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+            "label-sm": ["11px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+            "body-md": ["15px", {"lineHeight": "1.5", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+            "label-md": ["13px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 10px 15px -3px rgba(0, 0, 0, 0.02);
+    }
+    .glass-surface {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .diffusion-shadow {
+      box-shadow: 
+        0 60px 80px -20px rgba(0, 0, 0, 0.08),
+        0 30px 40px -15px rgba(0, 0, 0, 0.04);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .btn-primary-glint {
+      background: #101828;
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+      transition: all 0.2s ease;
+    }
+    .btn-primary-glint:hover {
+      background: #1d2939;
+      transform: translateY(-1px);
+    }
+    .btn-secondary-gloss {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e2e8f0;
+      color: #101828;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary-gloss:hover {
+      background: #ffffff;
+      border-color: #cbd5e1;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-on-surface">
+<!-- Side Navigation Bar (Shared Component Anchor) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest/60 backdrop-blur-2xl border-r border-white/10 flex flex-col p-element-gap z-50 hidden md:flex shadow-[0_0_40px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-3 px-2 py-4 mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dataset</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ApplyFlow</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Executive Suite</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Pipeline Active (Logic: Primary Intent) -->
+<a class="flex items-center gap-3 bg-primary dark:bg-surface-container-highest text-on-primary dark:text-on-surface rounded-lg px-4 py-2 shadow-lg transition-transform hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">filter_list</span>
+<span class="font-label-md text-label-md">Pipeline</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-label-md">Strategy</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-label-md text-label-md">Inbox</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 transition-all duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/30 pt-4 space-y-2">
+<button class="w-full btn-primary-glint text-white font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+        Review Profiles
+      </button>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high/50 rounded-lg px-4 py-2 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 min-h-screen relative flex items-center justify-center p-container-margin overflow-hidden">
+<!-- Atmospheric Background Animation -->
+
+<div class="relative z-10 w-full max-w-5xl">
+<!-- Top Section: Header -->
+<div class="mb-12 text-center">
+<span class="inline-block px-3 py-1 mb-4 rounded-full border border-primary/10 bg-primary/5 text-primary font-label-md text-label-md">System Workspace</span>
+<h2 class="font-display-lg text-display-lg text-primary tracking-tight mb-4">Design Review</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl mx-auto">Optimize your workflow by completing the missing profile components. AI-powered insights are ready for generation.</p>
+</div>
+<!-- Main Collection Container: Empty State Collection -->
+<div class="glass-surface diffusion-shadow rounded-[32px] p-8 md:p-12 overflow-hidden border border-white/40">
+<div class="flex justify-between items-center mb-10 border-b border-black/5 pb-6">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-primary">Empty state collection</h3>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Pending setup for current application</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 border border-black/5 hover:bg-white transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary">close</span>
+</button>
+</div>
+<!-- Bento Grid of Empty State Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Card 1: Job Analysis -->
+<div class="glass-card rounded-2xl p-6 flex flex-col group hover:scale-[1.02] transition-all duration-300">
+<div class="flex items-start justify-between mb-8">
+<div class="space-y-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Job Analysis</span>
+<p class="font-body-md text-body-md text-on-tertiary-container italic leading-relaxed">
+                  No analysis available yet. AI insights will appear here once the job description is processed.
+                </p>
+</div>
+<div class="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+</div>
+<div class="mt-auto">
+<button class="btn-primary-glint text-white w-full py-3 rounded-xl font-label-md text-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span>
+                Run Full Analysis
+              </button>
+</div>
+</div>
+<!-- Card 2: Job Posting -->
+<div class="glass-card rounded-2xl p-6 flex flex-col group hover:scale-[1.02] transition-all duration-300">
+<div class="flex items-start justify-between mb-8">
+<div class="space-y-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Job Posting</span>
+<p class="font-body-md text-body-md text-on-tertiary-container italic leading-relaxed">
+                  No job posting text saved for this application. A structured description is required.
+                </p>
+</div>
+<div class="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">post_add</span>
+</div>
+</div>
+<div class="mt-auto">
+<button class="btn-secondary-gloss w-full py-3 rounded-xl font-label-md text-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+                Create Draft
+              </button>
+</div>
+</div>
+<!-- Card 3: Linked Persona -->
+<div class="glass-card rounded-2xl p-6 flex flex-col group hover:scale-[1.02] transition-all duration-300">
+<div class="flex items-start justify-between mb-8">
+<div class="space-y-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Linked Persona</span>
+<p class="font-body-md text-body-md text-on-tertiary-container italic leading-relaxed">
+                  No persona selected. Choose a profile for future tailored workflows and matching.
+                </p>
+</div>
+<div class="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">person_pin</span>
+</div>
+</div>
+<div class="mt-auto">
+<button class="btn-secondary-gloss w-full py-3 rounded-xl font-label-md text-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">group_add</span>
+                Choose Profile
+              </button>
+</div>
+</div>
+<!-- Card 4: CV -->
+<div class="glass-card rounded-2xl p-6 flex flex-col group hover:scale-[1.02] transition-all duration-300">
+<div class="flex items-start justify-between mb-8">
+<div class="space-y-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">CV / Resume</span>
+<p class="font-body-md text-body-md text-on-tertiary-container italic leading-relaxed">
+                  No CV uploaded yet. Document parsing is necessary for profile synchronization.
+                </p>
+</div>
+<div class="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">description</span>
+</div>
+</div>
+<div class="mt-auto">
+<button class="btn-primary-glint text-white w-full py-3 rounded-xl font-label-md text-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">upload</span>
+                Upload CV
+              </button>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-12 flex justify-between items-center border-t border-black/5 pt-8">
+<button class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+            Back to Dashboard
+          </button>
+<p class="text-[11px] text-on-surface-variant/40 font-medium">All data is encrypted and handled via ApplyFlow Secure</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Nav (Shared Component Logic) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-3xl border-t border-white/20 flex justify-around items-center h-16 z-50 px-container-margin">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">filter_list</span>
+<span class="text-[10px] font-bold uppercase">Pipeline</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/70" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px] font-bold uppercase">Strategy</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/70" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="text-[10px] font-bold uppercase">Inbox</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/70" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span class="text-[10px] font-bold uppercase">Settings</span>
+</a>
+</nav>
+<script>
+    // Micro-interactions for glass cards
+    document.querySelectorAll('.glass-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        
+        // Subtle tilt effect
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 20;
+        const rotateY = -(x - centerX) / 20;
+        
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+      });
+    });
+  </script>
+</body></html>

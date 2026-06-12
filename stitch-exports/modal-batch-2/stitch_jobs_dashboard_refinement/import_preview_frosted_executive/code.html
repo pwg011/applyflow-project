@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .glass-surface {
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .recessed-field {
+            background: rgba(0, 0, 0, 0.03);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .recessed-field:focus-within {
+            border-color: #4648d4;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(70, 72, 212, 0.1);
+        }
+        .gloss-button {
+            background: #101828;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease;
+        }
+        .gloss-button:hover {
+            background: #1c2536;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .luminous-dot {
+            box-shadow: 0 0 8px #4648d4;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#7c8498",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#0d1c2d",
+                        "on-secondary-fixed": "#07006c",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#4648d4",
+                        "surface-dim": "#d8dadd",
+                        "on-primary-fixed-variant": "#3f4759",
+                        "surface-bright": "#f7f9fc",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#565e71",
+                        "tertiary-fixed-dim": "#b9c8de",
+                        "secondary-container": "#6063ee",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-surface": "#2d3133",
+                        "surface": "#f7f9fc",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#dbe2f9",
+                        "tertiary-fixed": "#d4e4fa",
+                        "on-primary-fixed": "#141b2c",
+                        "surface-container-low": "#f2f4f7",
+                        "surface-container-highest": "#e0e3e6",
+                        "primary-container": "#141b2c",
+                        "surface-container": "#eceef1",
+                        "on-tertiary-container": "#768599",
+                        "tertiary": "#000000",
+                        "background": "#f7f9fc",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-container": "#fffbff",
+                        "primary": "#000000",
+                        "outline": "#76777d",
+                        "inverse-on-surface": "#eff1f4",
+                        "primary-fixed-dim": "#bfc6dc",
+                        "surface-container-high": "#e6e8eb",
+                        "surface-variant": "#e0e3e6",
+                        "on-surface": "#191c1e",
+                        "on-tertiary-fixed-variant": "#39485a",
+                        "outline-variant": "#c6c6cd",
+                        "on-tertiary-fixed": "#0d1c2d",
+                        "inverse-primary": "#bfc6dc",
+                        "on-secondary-fixed-variant": "#2f2ebe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-padding": "64px",
+                        "unit": "4px",
+                        "element-gap": "16px",
+                        "gutter": "24px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "label-sm": ["11px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["15px", { "lineHeight": "1.5", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-container-low text-on-surface min-h-screen flex items-center justify-center p-container-margin overflow-hidden">
+<!-- Atmospheric Background Element -->
+<div class="fixed inset-0 pointer-events-none z-0">
+
+</div>
+<!-- Luxury Review Sheet Modal -->
+<main class="relative z-10 w-full max-w-4xl bg-surface-bright/80 backdrop-blur-3xl rounded-xl shadow-[0_60px_60px_rgba(0,0,0,0.1)] border border-white/40 overflow-hidden flex flex-col h-[870px]">
+<!-- Header Strip -->
+<header class="bg-primary-container text-white px-8 py-6 flex justify-between items-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+
+</div>
+<div class="relative z-10">
+<h1 class="font-headline-md text-headline-md text-white tracking-tight">Review imported job</h1>
+<p class="font-body-md text-on-primary-container">Check the extracted details before saving.</p>
+</div>
+<div class="relative z-10 flex items-center gap-3 bg-white/10 px-4 py-2 rounded-full border border-white/10 backdrop-blur-lg">
+<div class="w-2 h-2 rounded-full bg-secondary-fixed-dim luminous-dot"></div>
+<span class="font-label-md text-label-md text-white/90">High-confidence extraction</span>
+</div>
+</header>
+<!-- Body Content -->
+<div class="flex-1 overflow-y-auto px-8 py-section-padding space-y-gutter">
+<!-- Section: Job Identity -->
+<section class="space-y-element-gap">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[20px]">badge</span>
+<h2 class="font-label-md text-label-md uppercase tracking-widest text-on-surface-variant">Job Identity</h2>
+</div>
+<div class="grid grid-cols-2 gap-gutter">
+<div class="space-y-2">
+<label class="font-label-md text-on-surface-variant ml-1">Position Title</label>
+<div class="recessed-field rounded-lg px-4 py-3 flex items-center">
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-on-surface" type="text" value="Senior Design Lead"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-on-surface-variant ml-1">Organization</label>
+<div class="recessed-field rounded-lg px-4 py-3 flex items-center">
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-on-surface" type="text" value="Lumina Aerospace"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Source Details -->
+<section class="space-y-element-gap">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[20px]">link</span>
+<h2 class="font-label-md text-label-md uppercase tracking-widest text-on-surface-variant">Source Details</h2>
+</div>
+<div class="glass-surface bg-white/20 p-6 rounded-xl border border-white/20 space-y-gutter">
+<div class="flex items-start gap-4">
+<img class="w-12 h-12 rounded-lg object-cover shadow-sm" data-alt="A professional high-resolution close-up of a premium digital interface showing a LinkedIn profile page. The screen glows softly with a cool blue light, reflecting off the dark metallic casing of a sleek, modern laptop. The overall atmosphere is focused, high-stakes, and sophisticated, consistent with a premium executive workspace in light mode." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-ut6IwWzAYEpFqiBhQxNdlffbhLSVfMyjW0SVnMWI2OoMxeZ8CkP2bbAXz3AeGQ9qOi2m0mLtV9Y3Db2-nPX999nIBllJ8471Y8JYWBdiL-BOWZMTdY48gRNfxIButw0S3BF2WHaBoY2yMt-o9B_MqFaENM0iTtG_qa7OWoSZ7Bal2mvG9hyAX46fgIcwUPpX2bfp3MOeP5kvRRJHu4lfFROnIpDhMQGVIuKgZJk4uIyojD5pF-1dkYNsMY7ImqJuwAMbiU8RxfsN"/>
+<div class="flex-1">
+<p class="font-label-md text-on-surface">Extracted from LinkedIn</p>
+<p class="font-body-md text-on-surface-variant break-all">linkedin.com/jobs/view/382910485...</p>
+</div>
+<button class="text-secondary font-label-md hover:underline">View original</button>
+</div>
+</div>
+</section>
+<!-- Section: Extracted Summary -->
+<section class="space-y-element-gap">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary text-[20px]">description</span>
+<h2 class="font-label-md text-label-md uppercase tracking-widest text-on-surface-variant">Extracted Summary</h2>
+</div>
+<div class="recessed-field rounded-xl p-6">
+<textarea class="bg-transparent border-none focus:ring-0 w-full font-body-md text-on-surface-variant leading-relaxed h-32 resize-none">As Senior Design Lead, you will spearhead the visual evolution of our aerospace interface systems. Key responsibilities include cross-functional collaboration with engineering teams, mentorship of junior designers, and the establishment of a robust design system that balances technical complexity with intuitive elegance. Requirements: 8+ years in UI/UX, proficiency in Figma and Protopie.</textarea>
+</div>
+</section>
+<!-- Metadata Chips -->
+<div class="flex flex-wrap gap-2 pt-4">
+<div class="px-3 py-1.5 rounded-full border border-secondary/20 bg-secondary/5 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm text-secondary">Remote / San Francisco</span>
+</div>
+<div class="px-3 py-1.5 rounded-full border border-secondary/20 bg-secondary/5 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">payments</span>
+<span class="font-label-sm text-label-sm text-secondary">$180k - $240k</span>
+</div>
+<div class="px-3 py-1.5 rounded-full border border-secondary/20 bg-secondary/5 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">schedule</span>
+<span class="font-label-sm text-label-sm text-secondary">Full-time</span>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<footer class="px-8 py-6 bg-white/40 backdrop-blur-xl border-t border-white/20 flex justify-end items-center gap-4">
+<button class="px-6 py-2.5 rounded-lg font-label-md text-on-surface-variant hover:text-on-surface transition-colors">
+                Cancel
+            </button>
+<button class="gloss-button px-10 py-3 rounded-lg text-white font-label-md shadow-lg flex items-center gap-2">
+                Save Job
+                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+</button>
+</footer>
+</main>
+<script>
+        // Micro-interaction for inputs
+        document.querySelectorAll('.recessed-field input, .recessed-field textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.parentElement.style.transition = 'all 0.3s ease';
+            });
+        });
+
+        // Simple parallax effect for the sheet
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            const modal = document.querySelector('main');
+            modal.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        });
+    </script>
+</body></html>
