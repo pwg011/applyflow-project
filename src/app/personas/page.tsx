@@ -1,942 +1,126 @@
 "use client";
 
-import type { ChangeEvent, FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
-import BurgerMenu from "@/components/BurgerMenu";
-import PersonaBuildReviewModal from "@/components/PersonaBuildReviewModal";
-import PersonaDetailsModal from "@/components/PersonaDetailsModal";
-import PersonaForm from "@/components/PersonaForm";
-import PlusActionMenu from "@/components/PlusActionMenu";
-import ProfileDropdown from "@/components/ProfileDropdown";
-import SegmentedSwitch from "@/components/SegmentedSwitch";
-import {
-  loadLocalPersonas,
-  saveLocalPersonas,
-  temporaryLocalUser,
-} from "@/lib/localWorkspace";
-import { supabase } from "@/lib/supabaseClient";
-import type { Persona } from "@/types/persona";
-import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import ApplyShell from "@/components/applyflow/ApplyShell";
+import PageHeader from "@/components/applyflow/PageHeader";
+import NewTemplateCard from "@/components/profiles/NewTemplateCard";
+import ProfileCard from "@/components/profiles/ProfileCard";
+import { profiles } from "@/data/applyflow";
 
-type PersonaFormData = {
-  display_name: string;
-  email: string;
-  phone: string;
-  professional_title: string;
-  target_role: string;
-  skills: string;
-  experience_summary: string;
-};
-
-type ToastState = {
-  message: string;
-  tone: "success" | "error";
-};
-
-const initialFormData: PersonaFormData = {
-  display_name: "",
-  email: "",
-  phone: "",
-  professional_title: "",
-  target_role: "",
-  skills: "",
-  experience_summary: "",
-};
-
-const initialBuildReviewFormData: PersonaFormData = {
-  display_name: "",
-  email: "",
-  phone: "",
-  professional_title: "",
-  target_role: "",
-  skills: "",
-  experience_summary: "",
-};
-
-function mapRowToPersona(row: Partial<Persona>): Persona {
-  return {
-    id: String(row.id ?? ""),
-    user_id: row.user_id ?? null,
-    display_name: row.display_name ?? "",
-    email: row.email ?? "",
-    phone: row.phone ?? null,
-    professional_title: row.professional_title ?? null,
-    target_role: row.target_role ?? null,
-    skills: row.skills ?? null,
-    experience_summary: row.experience_summary ?? null,
-    cv_file_path: row.cv_file_path ?? null,
-    cv_file_name: row.cv_file_name ?? null,
-    cv_uploaded_at: row.cv_uploaded_at ?? null,
-    build_status: row.build_status ?? "manual",
-    created_at: row.created_at ?? null,
-  };
-}
-
-function sanitizeFileName(fileName: string) {
-  return fileName
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9._-]/g, "")
-    .replace(/-+/g, "-");
-}
-
-function isSupportedCvFile(file: File) {
-  const fileName = file.name.toLowerCase();
-
-  return (
-    file.type === "application/pdf" ||
-    file.type ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    fileName.endsWith(".pdf") ||
-    fileName.endsWith(".docx")
-  );
-}
-
-function getCvContentType(file: File) {
-  let contentType = file.type;
-  const fileName = file.name.toLowerCase();
-
-  if (!contentType) {
-    if (fileName.endsWith(".pdf")) {
-      contentType = "application/pdf";
-    } else if (fileName.endsWith(".docx")) {
-      contentType =
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    }
-  }
-
-  return contentType;
-}
-
-async function verifyUploadedCvSize(path: string, expectedSize: number) {
-  const { data, error } = await supabase.storage.from("persona-cvs").download(path);
-
-  if (error || !data) {
-    throw new Error(error?.message || "Could not verify the uploaded CV file.");
-  }
-
-  const storedSize = data.size;
-  const allowedDifference = Math.max(2048, Math.round(expectedSize * 0.05));
-
-  console.log("Uploaded CV verification:", {
-    expectedSize,
-    storedSize,
-    contentType: data.type || "unknown",
-  });
-
-  if (Math.abs(storedSize - expectedSize) > allowedDifference) {
-    throw new Error("The uploaded CV file appears incomplete or invalid.");
-  }
-}
-
-export default function PersonasPage() {
-  const cvDraftInputRef = useRef<HTMLInputElement | null>(null);
-  const createMenuRef = useRef<HTMLDivElement | null>(null);
-  const burgerMenuRef = useRef<HTMLDivElement | null>(null);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
-  const pathname = usePathname();
-  const user = temporaryLocalUser;
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const isLoading = false;
-  const [isSaving, setIsSaving] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
-  const [personaToBuild, setPersonaToBuild] = useState<Persona | null>(
+export default function ProfilesPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [activeProfileTitle, setActiveProfileTitle] = useState<string | null>(
     null,
   );
-  const [formData, setFormData] = useState<PersonaFormData>(initialFormData);
-  const [buildReviewFormData, setBuildReviewFormData] =
-    useState<PersonaFormData>(initialBuildReviewFormData);
-  const [formError, setFormError] = useState("");
-  const [buildReviewError, setBuildReviewError] = useState("");
-  const [detailsRebuildError, setDetailsRebuildError] = useState("");
-  const [autoBuildReviewOnOpen, setAutoBuildReviewOnOpen] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
-  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
-  const [isUploadingCv, setIsUploadingCv] = useState(false);
-  const isAnalyzingCv = false;
-  const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  function showToast(message: string, tone: ToastState["tone"]) {
-    setToast({ message, tone });
-  }
+  const filteredProfiles = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-  function logSupabaseError(
-    action: string,
-    error: {
-      message?: string;
-      details?: string;
-      hint?: string;
-      code?: string;
-    },
-  ) {
-    console.log(`Failed to ${action}:`, {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
-    });
-  }
-
-  function updatePersonas(updater: (current: Persona[]) => Persona[]) {
-    setPersonas((current) => {
-      const nextPersonas = updater(current);
-      saveLocalPersonas(nextPersonas);
-      return nextPersonas;
-    });
-  }
-
-  useEffect(() => {
-    // Auth is removed from the main flow; restore the local workspace immediately.
-    const timeoutId = window.setTimeout(() => {
-      setPersonas(loadLocalPersonas());
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!toast) {
-      return;
+    if (!query) {
+      return profiles;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setToast(null);
-    }, 2500);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [toast]);
-
-  useEffect(() => {
-    if (!isCreateMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!createMenuRef.current) {
-        return;
-      }
-
-      if (!createMenuRef.current.contains(event.target as Node)) {
-        setIsCreateMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isCreateMenuOpen]);
-
-  useEffect(() => {
-    if (!isBurgerMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!burgerMenuRef.current) {
-        return;
-      }
-
-      if (!burgerMenuRef.current.contains(event.target as Node)) {
-        setIsBurgerMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isBurgerMenuOpen]);
-
-  useEffect(() => {
-    if (!isProfileMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!profileMenuRef.current) {
-        return;
-      }
-
-      if (!profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isProfileMenuOpen]);
-
-  function closeForm() {
-    setIsFormOpen(false);
-    setEditingPersonaId(null);
-    setFormData(initialFormData);
-    setFormError("");
-  }
-
-  function openCreateForm() {
-    setIsCreateMenuOpen(false);
-    setEditingPersonaId(null);
-    setFormData(initialFormData);
-    setFormError("");
-    setIsFormOpen(true);
-  }
-
-  function handleOpenCreateMenu() {
-    setIsCreateMenuOpen((current) => !current);
-  }
-
-  function handleCvAutoFillSelect() {
-    setIsCreateMenuOpen(false);
-    cvDraftInputRef.current?.click();
-  }
-
-  function openEditForm(persona: Persona) {
-    setSelectedPersona(null);
-    setPersonaToBuild(null);
-    setEditingPersonaId(persona.id);
-    setFormData({
-      display_name: persona.display_name,
-      email: persona.email,
-      phone: persona.phone ?? "",
-      professional_title: persona.professional_title ?? "",
-      target_role: persona.target_role ?? "",
-      skills: persona.skills ?? "",
-      experience_summary: persona.experience_summary ?? "",
-    });
-    setFormError("");
-    setIsFormOpen(true);
-  }
-
-  function openPersonaDetails(persona: Persona) {
-    setDetailsRebuildError("");
-
-    if (persona.build_status === "cv_draft") {
-      setSelectedPersona(null);
-      setBuildReviewError("");
-      setAutoBuildReviewOnOpen(false);
-      setBuildReviewFormData({
-        display_name: persona.display_name,
-        email: persona.email,
-        phone: persona.phone ?? "",
-        professional_title: persona.professional_title ?? "",
-        target_role: persona.target_role ?? "",
-        skills: persona.skills ?? "",
-        experience_summary: persona.experience_summary ?? "",
-      });
-      setPersonaToBuild(persona);
-      return;
-    }
-
-    setPersonaToBuild(null);
-    setSelectedPersona(persona);
-  }
-
-  function closePersonaDetails() {
-    setSelectedPersona(null);
-    setDetailsRebuildError("");
-    setAutoBuildReviewOnOpen(false);
-  }
-
-  function closeBuildReviewModal() {
-    setPersonaToBuild(null);
-    setBuildReviewFormData(initialBuildReviewFormData);
-    setBuildReviewError("");
-    setAutoBuildReviewOnOpen(false);
-  }
-
-  function openBuildReviewForPersona(persona: Persona) {
-    if (!persona.cv_file_path) {
-      setDetailsRebuildError("No CV is attached to this persona.");
-      return;
-    }
-
-    const shouldRebuild = window.confirm(
-      "AI-generated fields will replace the current fields in the review screen, but nothing will be saved until you click Save Persona.",
+    return profiles.filter(
+      (profile) =>
+        profile.title.toLowerCase().includes(query) ||
+        profile.description.toLowerCase().includes(query),
     );
+  }, [searchQuery]);
 
-    if (!shouldRebuild) {
-      return;
-    }
-
-    setDetailsRebuildError("");
-    setSelectedPersona(null);
-    setBuildReviewError("");
-    setBuildReviewFormData({
-      display_name: persona.display_name,
-      email: persona.email,
-      phone: persona.phone ?? "",
-      professional_title: persona.professional_title ?? "",
-      target_role: persona.target_role ?? "",
-      skills: persona.skills ?? "",
-      experience_summary: persona.experience_summary ?? "",
-    });
-    setAutoBuildReviewOnOpen(true);
-    setPersonaToBuild(persona);
+  function openCreateProfile() {
+    setActiveProfileTitle(null);
+    setIsCreateOpen(true);
   }
 
-  function handleInputChange(
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) {
-    const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  }
-
-  function handleBuildReviewInputChange(
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) {
-    const { name, value } = event.target;
-
-    setBuildReviewFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!formData.display_name.trim() || !formData.email.trim()) {
-      setFormError("Display Name and Email are required.");
-      return;
-    }
-
-    setFormError("");
-    setIsSaving(true);
-
-    const payload = {
-      user_id: user.id,
-      display_name: formData.display_name.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim() || null,
-      professional_title: formData.professional_title.trim() || null,
-      target_role: formData.target_role.trim() || null,
-      skills: formData.skills.trim() || null,
-      experience_summary: formData.experience_summary.trim() || null,
-    };
-
-    if (editingPersonaId) {
-      updatePersonas((current) =>
-        current.map((persona) =>
-          persona.id === editingPersonaId ? { ...persona, ...payload } : persona,
-        ),
-      );
-      showToast("Persona updated", "success");
-    } else {
-      updatePersonas((current) => [
-        {
-          id: crypto.randomUUID(),
-          ...payload,
-          cv_file_path: null,
-          cv_file_name: null,
-          cv_uploaded_at: null,
-          build_status: "manual",
-          created_at: new Date().toISOString(),
-        },
-        ...current,
-      ]);
-      showToast("Persona created", "success");
-    }
-
-    setIsSaving(false);
-    closeForm();
-  }
-
-  async function handleDelete(persona: Persona) {
-    const shouldDelete = window.confirm(
-      `Delete persona "${persona.display_name}"?`,
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    setSelectedPersona((current) =>
-      current?.id === persona.id ? null : current,
-    );
-    setPersonaToBuild((current) =>
-      current?.id === persona.id ? null : current,
-    );
-    updatePersonas((current) =>
-      current.filter((item) => item.id !== persona.id),
-    );
-    showToast("Persona deleted", "success");
-  }
-
-  async function handleBuildWithAi() {
-    if (!personaToBuild) {
-      setBuildReviewError("No persona is available to analyze.");
-      return;
-    }
-
-    if (!personaToBuild.cv_file_path) {
-      setBuildReviewError("No CV is attached to this persona.");
-      return;
-    }
-
-    setBuildReviewError(
-      "AI CV analysis is paused while authentication is removed from the app.",
-    );
-  }
-
-  async function handleBuildReviewSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!personaToBuild) {
-      setBuildReviewError("No persona is available to save.");
-      return;
-    }
-
-    if (!buildReviewFormData.display_name.trim()) {
-      setBuildReviewError("Display name is required.");
-      return;
-    }
-
-    setBuildReviewError("");
-    setIsSaving(true);
-
-    const updates = {
-      display_name: buildReviewFormData.display_name.trim(),
-      email: buildReviewFormData.email.trim(),
-      phone: buildReviewFormData.phone.trim() || null,
-      professional_title: buildReviewFormData.professional_title.trim() || null,
-      target_role: buildReviewFormData.target_role.trim() || null,
-      skills: buildReviewFormData.skills.trim() || null,
-      experience_summary: buildReviewFormData.experience_summary.trim() || null,
-      build_status: "complete" as const,
-    };
-
-    updatePersonas((current) =>
-      current.map((persona) =>
-        persona.id === personaToBuild.id
-          ? {
-              ...persona,
-              ...updates,
-            }
-          : persona,
-      ),
-    );
-    showToast("Persona saved", "success");
-    setIsSaving(false);
-    closeBuildReviewModal();
-  }
-
-  async function handleUploadCv(persona: Persona, file: File) {
-    if (!isSupportedCvFile(file)) {
-      showToast("Only PDF or DOCX files are supported.", "error");
-      return;
-    }
-
-    setIsUploadingCv(true);
-
-    const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
-    const filePath = `${user.id}/${persona.id}/${Date.now()}-${safeFileName}`;
-    const contentType = getCvContentType(file);
-
-    console.log("Uploading CV file:", {
-      size: file.size,
-      type: file.type,
-    });
-
-    const { error: uploadError } = await supabase.storage
-      .from("persona-cvs")
-      .upload(filePath, file, {
-        upsert: false,
-        contentType,
-      });
-
-    if (uploadError) {
-      logSupabaseError("upload persona CV", uploadError);
-      showToast(uploadError.message || "Could not upload CV.", "error");
-      setIsUploadingCv(false);
-      return;
-    }
-
-    try {
-      await verifyUploadedCvSize(filePath, file.size);
-    } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "The uploaded CV file appears incomplete or invalid.",
-        "error",
-      );
-      setIsUploadingCv(false);
-      return;
-    }
-
-    const cvUploadedAt = new Date().toISOString();
-    const updates = {
-      cv_file_path: filePath,
-      cv_file_name: file.name,
-      cv_uploaded_at: cvUploadedAt,
-    };
-
-    const { error: updateError } = await supabase
-      .from("personas")
-      .update(updates)
-      .eq("id", persona.id)
-      .eq("user_id", user.id);
-
-    if (updateError) {
-      logSupabaseError("save persona CV reference", updateError);
-      showToast(updateError.message || "Could not save CV reference.", "error");
-      setIsUploadingCv(false);
-      return;
-    }
-
-    updatePersonas((current) =>
-      current.map((item) =>
-        item.id === persona.id
-          ? {
-              ...item,
-              ...updates,
-            }
-          : item,
-      ),
-    );
-    setSelectedPersona((current) =>
-      current?.id === persona.id
-        ? {
-            ...current,
-            ...updates,
-          }
-        : current,
-    );
-    showToast(persona.cv_file_path ? "CV replaced" : "CV uploaded", "success");
-    setIsUploadingCv(false);
-  }
-
-  async function handleDraftCvFileChange(
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const file = event.target.files?.[0] ?? event.target.files?.item(0) ?? null;
-    event.target.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    if (!isSupportedCvFile(file)) {
-      showToast("Only PDF or DOCX files are supported.", "error");
-      return;
-    }
-
-    setIsUploadingCv(true);
-
-    const timestamp = Date.now();
-    const safeFileName = sanitizeFileName(file.name) || "cv.pdf";
-    const filePath = `${user.id}/draft-${timestamp}-${safeFileName}`;
-    const contentType = getCvContentType(file);
-
-    console.log("Uploading draft CV file:", {
-      size: file.size,
-      type: file.type,
-    });
-
-    const { error: uploadError } = await supabase.storage
-      .from("persona-cvs")
-      .upload(filePath, file, {
-        upsert: false,
-        contentType,
-      });
-
-    if (uploadError) {
-      logSupabaseError("upload draft persona CV", uploadError);
-      showToast(uploadError.message || "Could not upload CV.", "error");
-      setIsUploadingCv(false);
-      return;
-    }
-
-    try {
-      await verifyUploadedCvSize(filePath, file.size);
-    } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "The uploaded CV file appears incomplete or invalid.",
-        "error",
-      );
-      setIsUploadingCv(false);
-      return;
-    }
-
-    const cvUploadedAt = new Date().toISOString();
-    const draftPayload = {
-      user_id: user.id,
-      display_name: "",
-      email: "",
-      phone: null,
-      professional_title: null,
-      target_role: null,
-      skills: null,
-      experience_summary: null,
-      cv_file_path: filePath,
-      cv_file_name: file.name,
-      cv_uploaded_at: cvUploadedAt,
-      build_status: "cv_draft" as const,
-    };
-
-    const { data, error: insertError } = await supabase
-      .from("personas")
-      .insert(draftPayload)
-      .select("*")
-      .single();
-
-    if (insertError || !data) {
-      if (insertError) {
-        logSupabaseError("create draft persona", insertError);
-      }
-      showToast(
-        insertError?.message || "Could not create draft persona.",
-        "error",
-      );
-      setIsUploadingCv(false);
-      return;
-    }
-
-    updatePersonas((current) => [
-      mapRowToPersona(data as Partial<Persona>),
-      ...current,
-    ]);
-    showToast("Draft persona created", "success");
-    setIsUploadingCv(false);
-  }
-
-  function handleLogout() {
-    setIsProfileMenuOpen(false);
-    closeForm();
+  function openProfile(profileTitle: string) {
+    setActiveProfileTitle(profileTitle);
+    setIsCreateOpen(true);
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-          <div ref={burgerMenuRef} className="relative shrink-0">
+    <ApplyShell
+      activeNav="profiles"
+      topBarSearchPlaceholder="Search profiles..."
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      userInitials="PA"
+    >
+      <div className="min-h-[calc(100vh-63px)] px-5 pb-0 pt-7 sm:px-10 xl:px-12">
+        <section className="mx-auto max-w-[928px]">
+          <PageHeader
+            title="Profiles"
+            subtitle="Manage reusable professional profiles"
+            actionLabel="Create Profile"
+            actionIcon={
+              <span className="text-[19px] font-light leading-none">+</span>
+            }
+            onActionClick={openCreateProfile}
+          />
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {filteredProfiles.map((profile) => (
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                onView={() => openProfile(profile.title)}
+                onEdit={() => openProfile(profile.title)}
+              />
+            ))}
+
+            <NewTemplateCard onClick={openCreateProfile} />
+          </div>
+        </section>
+
+        <footer className="mx-auto mt-20 flex max-w-[928px] flex-col gap-6 border-t border-[#e4e6e9] py-8 text-[11px] text-[#4b4b4d] sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; 2026 ApplyFlow. All rights reserved.</p>
+          <div className="flex gap-7">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Support</a>
+          </div>
+        </footer>
+      </div>
+
+      {isCreateOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-5"
+          onClick={() => setIsCreateOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg border border-white/80 bg-[#f7f9fc] p-8 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">
+                  {activeProfileTitle ? "Profile" : "Create Profile"}
+                </h2>
+                <p className="mt-2 text-sm text-[#5d6064]">
+                  {activeProfileTitle
+                    ? activeProfileTitle
+                    : "Start a reusable professional profile."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="text-2xl"
+                aria-label="Close profile dialog"
+              >
+                &times;
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => setIsBurgerMenuOpen((current) => !current)}
-              aria-label="Open navigation menu"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm transition hover:bg-slate-50"
+              onClick={() => setIsCreateOpen(false)}
+              className="mt-8 w-full rounded bg-black px-5 py-3 font-semibold text-white"
             >
-              ☰
+              Done
             </button>
-
-            <BurgerMenu
-              isOpen={isBurgerMenuOpen}
-              currentPath={pathname}
-            />
-          </div>
-
-          <div className="min-w-0 flex-1 px-3 text-center">
-            <h1 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Profiles
-            </h1>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3">
-            <div ref={createMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={handleOpenCreateMenu}
-                aria-label="Open persona create menu"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-              >
-                <span aria-hidden="true" className="text-base leading-none">
-                  +
-                </span>
-                Create Profile
-              </button>
-
-              <PlusActionMenu
-                isOpen={isCreateMenuOpen}
-                onAddManual={openCreateForm}
-                onImport={handleCvAutoFillSelect}
-                addManualLabel="Create manually"
-                importLabel="Use CV to auto-fill"
-              />
-            </div>
-
-            <div ref={profileMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setIsProfileMenuOpen((current) => !current)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-              >
-                P
-              </button>
-
-              <ProfileDropdown
-                onLogout={handleLogout}
-                isOpen={isProfileMenuOpen}
-              />
-            </div>
           </div>
         </div>
-      </header>
-
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <div className="mb-4 sm:mb-6">
-          <SegmentedSwitch active="profiles" />
-        </div>
-
-        <div className="mb-8">
-          <p className="text-sm text-slate-500">
-            Build reusable professional personas for future AI-assisted workflows.
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-10 text-center">
-            <p className="text-sm text-slate-500">Loading personas...</p>
-          </div>
-        ) : personas.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <h2 className="text-lg font-medium">No personas yet</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Create your first persona to start organizing your professional profiles.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {personas.map((persona) => (
-              <article
-                key={persona.id}
-                className={`flex min-h-[240px] cursor-pointer flex-col justify-between rounded-3xl p-5 shadow-sm transition ${
-                  persona.build_status === "cv_draft"
-                    ? "border border-slate-900 bg-slate-900 text-white hover:bg-slate-800"
-                    : "border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
-                }`}
-                onClick={() => openPersonaDetails(persona)}
-              >
-                <div>
-                  {persona.build_status === "cv_draft" ? (
-                    <>
-                      <div className="inline-flex rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-200">
-                        CV attached
-                      </div>
-
-                      <div className="mt-5 space-y-2">
-                        <h2 className="text-xl font-semibold tracking-tight text-white">
-                          Build from CV
-                        </h2>
-                        <p className="text-sm text-slate-300">
-                          Click to create persona
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
-                        {persona.cv_file_path ? "CV attached" : "No CV yet"}
-                      </div>
-
-                      <div className="mt-5 space-y-2">
-                        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                          {persona.display_name}
-                        </h2>
-                        <p className="text-sm text-slate-600">
-                          {persona.target_role || "Target role not provided"}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <p
-                  className={`mt-6 text-sm ${
-                    persona.build_status === "cv_draft"
-                      ? "text-slate-300"
-                      : "text-slate-400"
-                  }`}
-                >
-                  View details
-                </p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <input
-        ref={cvDraftInputRef}
-        type="file"
-        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        className="sr-only"
-        onChange={handleDraftCvFileChange}
-      />
-
-      <PersonaDetailsModal
-        persona={selectedPersona}
-        onClose={closePersonaDetails}
-        onEdit={openEditForm}
-        onDelete={handleDelete}
-        onRebuildWithAi={openBuildReviewForPersona}
-        onUploadCv={handleUploadCv}
-        isUploadingCv={isUploadingCv}
-        rebuildError={detailsRebuildError}
-      />
-
-      <PersonaBuildReviewModal
-        persona={personaToBuild}
-        formData={buildReviewFormData}
-        isSaving={isSaving}
-        isAnalyzing={isAnalyzingCv}
-        errorMessage={buildReviewError}
-        autoBuildOnOpen={autoBuildReviewOnOpen}
-        onClose={closeBuildReviewModal}
-        onChange={handleBuildReviewInputChange}
-        onBuildWithAi={handleBuildWithAi}
-        onSubmit={handleBuildReviewSubmit}
-      />
-
-      <PersonaForm
-        isOpen={isFormOpen}
-        mode={editingPersonaId ? "edit" : "create"}
-        formData={formData}
-        errorMessage={formError}
-        isSaving={isSaving}
-        onChange={handleInputChange}
-        onClose={closeForm}
-        onSubmit={handleSubmit}
-      />
-
-      <div
-        className={`fixed right-4 top-4 z-[120] transition-all duration-200 ease-out ${
-          toast
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0"
-        }`}
-        aria-hidden={!toast}
-      >
-        {toast ? (
-          <div
-            className={`rounded-2xl border bg-white px-4 py-3 text-sm shadow-lg ${
-              toast.tone === "success"
-                ? "border-slate-200 text-slate-700"
-                : "border-red-200 text-red-600"
-            }`}
-          >
-            {toast.message}
-          </div>
-        ) : null}
-      </div>
-    </main>
+      ) : null}
+    </ApplyShell>
   );
 }

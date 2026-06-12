@@ -1,6 +1,7 @@
 export type ApplyFlowNavKey = "dashboard" | "jobs" | "profiles";
 export type JobStatus = "Interview" | "Applied" | "Draft" | "Saved" | "Active";
 export type StatusTone = "blue" | "slate" | "amber" | "gray";
+export type ProfileIconName = "design" | "code" | "growth";
 
 export type ApplyFlowJob = {
   id: string;
@@ -25,6 +26,17 @@ export type ApplyFlowJob = {
     title: string;
     date: string;
   }>;
+};
+
+export type ApplyFlowProfile = {
+  id: string;
+  title: string;
+  status: "Active" | "Draft";
+  statusTone: StatusTone;
+  description: string;
+  completion: number;
+  footerNote: string;
+  icon: ProfileIconName;
 };
 
 export const sidebarNavItems: Array<{
@@ -137,5 +149,38 @@ export const jobs: ApplyFlowJob[] = [
     applicationLog: [
       { title: "Job Saved", date: "Oct 23, 2026 \u2022 08:45 AM" },
     ],
+  },
+];
+
+export const profiles: ApplyFlowProfile[] = [
+  {
+    id: "senior-product-designer",
+    title: "Senior Product Designer",
+    status: "Active",
+    statusTone: "gray",
+    description: "Focused on Fintech & SaaS ecosystems.",
+    completion: 92,
+    footerNote: "CV verified",
+    icon: "design",
+  },
+  {
+    id: "frontend-lead",
+    title: "Frontend Lead",
+    status: "Draft",
+    statusTone: "gray",
+    description: "React, TypeScript, Architecture.",
+    completion: 45,
+    footerNote: "Upload pending",
+    icon: "code",
+  },
+  {
+    id: "growth-lead",
+    title: "Growth Lead",
+    status: "Active",
+    statusTone: "gray",
+    description: "Data-driven user acquisition.",
+    completion: 100,
+    footerNote: "Optimized",
+    icon: "growth",
   },
 ];
