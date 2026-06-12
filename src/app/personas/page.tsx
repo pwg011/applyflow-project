@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BurgerMenu from "@/components/BurgerMenu";
 import PersonaBuildReviewModal from "@/components/PersonaBuildReviewModal";
 import PersonaDetailsModal from "@/components/PersonaDetailsModal";
@@ -9,10 +9,14 @@ import PersonaForm from "@/components/PersonaForm";
 import PlusActionMenu from "@/components/PlusActionMenu";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import SegmentedSwitch from "@/components/SegmentedSwitch";
+import {
+  loadLocalPersonas,
+  saveLocalPersonas,
+  temporaryLocalUser,
+} from "@/lib/localWorkspace";
 import { supabase } from "@/lib/supabaseClient";
 import type { Persona } from "@/types/persona";
 import { usePathname } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 
 type PersonaFormData = {
   display_name: string;
@@ -27,21 +31,6 @@ type PersonaFormData = {
 type ToastState = {
   message: string;
   tone: "success" | "error";
-};
-
-type PersonaCvAnalysisResponse = {
-  display_name: string;
-  email: string;
-  phone: string;
-  professional_title: string;
-  target_role: string;
-  skills: string;
-  experience_summary: string;
-};
-
-type NeedsClientOcrResponse = {
-  needsClientOcr: true;
-  reason: string;
 };
 
 const initialFormData: PersonaFormData = {
@@ -140,48 +129,15 @@ async function verifyUploadedCvSize(path: string, expectedSize: number) {
   }
 }
 
-function isPersonaCvAnalysisResponse(
-  value: unknown,
-): value is PersonaCvAnalysisResponse {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    typeof candidate.display_name === "string" &&
-    typeof candidate.email === "string" &&
-    typeof candidate.phone === "string" &&
-    typeof candidate.professional_title === "string" &&
-    typeof candidate.target_role === "string" &&
-    typeof candidate.skills === "string" &&
-    typeof candidate.experience_summary === "string"
-  );
-}
-
-function isNeedsClientOcrResponse(value: unknown): value is NeedsClientOcrResponse {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    candidate.needsClientOcr === true && typeof candidate.reason === "string"
-  );
-}
-
 export default function PersonasPage() {
   const cvDraftInputRef = useRef<HTMLInputElement | null>(null);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const burgerMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const user = temporaryLocalUser;
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = false;
   const [isSaving, setIsSaving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
@@ -199,7 +155,7 @@ export default function PersonasPage() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isUploadingCv, setIsUploadingCv] = useState(false);
-  const [isAnalyzingCv, setIsAnalyzingCv] = useState(false);
+  const isAnalyzingCv = false;
   const [isBurgerMenuOpen, setIsBurgerMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -224,63 +180,24 @@ export default function PersonasPage() {
     });
   }
 
-  const fetchPersonas = useCallback(async (currentUser: User) => {
-    setIsLoading(true);
-
-    const { data, error } = await supabase
-      .from("personas")
-      .select("*")
-      .eq("user_id", currentUser.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      logSupabaseError("fetch personas", error);
-      showToast(error.message || "Something went wrong. Please try again.", "error");
-      setIsLoading(false);
-      return;
-    }
-
-    setPersonas((data ?? []).map((row) => mapRowToPersona(row as Partial<Persona>)));
-    setIsLoading(false);
-  }, []);
+  function updatePersonas(updater: (current: Persona[]) => Persona[]) {
+    setPersonas((current) => {
+      const nextPersonas = updater(current);
+      saveLocalPersonas(nextPersonas);
+      return nextPersonas;
+    });
+  }
 
   useEffect(() => {
-    async function loadSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        await fetchPersonas(session.user);
-      } else {
-        setPersonas([]);
-        setIsLoading(false);
-      }
-      setUser(session?.user ?? null);
-      setIsAuthReady(true);
-    }
-
-    void loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      void (async () => {
-        if (session?.user) {
-          await fetchPersonas(session.user);
-        } else {
-          setPersonas([]);
-          setIsLoading(false);
-        }
-        setUser(session?.user ?? null);
-        setIsAuthReady(true);
-      })();
-    });
+    // Auth is removed from the main flow; restore the local workspace immediately.
+    const timeoutId = window.setTimeout(() => {
+      setPersonas(loadLocalPersonas());
+    }, 0);
 
     return () => {
-      subscription.unsubscribe();
+      window.clearTimeout(timeoutId);
     };
-  }, [fetchPersonas]);
+  }, []);
 
   useEffect(() => {
     if (!toast) {
@@ -495,11 +412,6 @@ export default function PersonasPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!user) {
-      setFormError("You must be logged in to save a persona.");
-      return;
-    }
-
     if (!formData.display_name.trim() || !formData.email.trim()) {
       setFormError("Display Name and Email are required.");
       return;
@@ -520,36 +432,25 @@ export default function PersonasPage() {
     };
 
     if (editingPersonaId) {
-      const { error } = await supabase
-        .from("personas")
-        .update(payload)
-        .eq("id", editingPersonaId)
-        .eq("user_id", user.id);
-
-      if (error) {
-        logSupabaseError("update persona", error);
-        setFormError(error.message || "Something went wrong. Please try again.");
-        setIsSaving(false);
-        return;
-      }
-
-      if (user) {
-        await fetchPersonas(user);
-      }
+      updatePersonas((current) =>
+        current.map((persona) =>
+          persona.id === editingPersonaId ? { ...persona, ...payload } : persona,
+        ),
+      );
       showToast("Persona updated", "success");
     } else {
-      const { error } = await supabase.from("personas").insert(payload);
-
-      if (error) {
-        logSupabaseError("create persona", error);
-        setFormError(error.message || "Something went wrong. Please try again.");
-        setIsSaving(false);
-        return;
-      }
-
-      if (user) {
-        await fetchPersonas(user);
-      }
+      updatePersonas((current) => [
+        {
+          id: crypto.randomUUID(),
+          ...payload,
+          cv_file_path: null,
+          cv_file_name: null,
+          cv_uploaded_at: null,
+          build_status: "manual",
+          created_at: new Date().toISOString(),
+        },
+        ...current,
+      ]);
       showToast("Persona created", "success");
     }
 
@@ -558,28 +459,11 @@ export default function PersonasPage() {
   }
 
   async function handleDelete(persona: Persona) {
-    if (!user) {
-      showToast("You must be logged in to delete a persona.", "error");
-      return;
-    }
-
     const shouldDelete = window.confirm(
       `Delete persona "${persona.display_name}"?`,
     );
 
     if (!shouldDelete) {
-      return;
-    }
-
-    const { error } = await supabase
-      .from("personas")
-      .delete()
-      .eq("id", persona.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      logSupabaseError("delete persona", error);
-      showToast(error.message || "Something went wrong. Please try again.", "error");
       return;
     }
 
@@ -589,7 +473,9 @@ export default function PersonasPage() {
     setPersonaToBuild((current) =>
       current?.id === persona.id ? null : current,
     );
-    setPersonas((current) => current.filter((item) => item.id !== persona.id));
+    updatePersonas((current) =>
+      current.filter((item) => item.id !== persona.id),
+    );
     showToast("Persona deleted", "success");
   }
 
@@ -604,81 +490,16 @@ export default function PersonasPage() {
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.access_token) {
-      setBuildReviewError("You must be logged in to analyze this CV.");
-      return;
-    }
-
-    setBuildReviewError("");
-    setIsAnalyzingCv(true);
-
-    try {
-      const response = await fetch("/api/analyze-cv", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          persona_id: personaToBuild.id,
-          cv_file_path: personaToBuild.cv_file_path,
-        }),
-      });
-
-      const responseBody = (await response.json()) as unknown;
-
-      if (!response.ok) {
-        throw new Error(
-          typeof responseBody === "object" &&
-            responseBody !== null &&
-            "error" in responseBody &&
-            typeof responseBody.error === "string"
-            ? responseBody.error
-            : "Could not analyze this CV.",
-        );
-      }
-
-      if (isNeedsClientOcrResponse(responseBody)) {
-        setBuildReviewError(
-          `${responseBody.reason} This PDF needs browser scanning before AI can build the persona.`,
-        );
-        showToast("This PDF needs browser scanning before AI analysis.", "error");
-        return;
-      }
-
-      if (!isPersonaCvAnalysisResponse(responseBody)) {
-        throw new Error("The CV analysis response was incomplete.");
-      }
-
-      setBuildReviewFormData({
-        display_name: responseBody.display_name ?? "",
-        email: responseBody.email ?? "",
-        phone: responseBody.phone ?? "",
-        professional_title: responseBody.professional_title ?? "",
-        target_role: responseBody.target_role ?? "",
-        skills: responseBody.skills ?? "",
-        experience_summary: responseBody.experience_summary ?? "",
-      });
-      showToast("CV analysis completed. Review the fields before saving.", "success");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not analyze this CV.";
-      setBuildReviewError(message);
-      showToast(message, "error");
-    } finally {
-      setIsAnalyzingCv(false);
-    }
+    setBuildReviewError(
+      "AI CV analysis is paused while authentication is removed from the app.",
+    );
   }
 
   async function handleBuildReviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!user || !personaToBuild) {
-      setBuildReviewError("You must be logged in to save this persona.");
+    if (!personaToBuild) {
+      setBuildReviewError("No persona is available to save.");
       return;
     }
 
@@ -701,22 +522,7 @@ export default function PersonasPage() {
       build_status: "complete" as const,
     };
 
-    const { error } = await supabase
-      .from("personas")
-      .update(updates)
-      .eq("id", personaToBuild.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      logSupabaseError("complete draft persona", error);
-      setBuildReviewError(
-        error.message || "Something went wrong. Please try again.",
-      );
-      setIsSaving(false);
-      return;
-    }
-
-    setPersonas((current) =>
+    updatePersonas((current) =>
       current.map((persona) =>
         persona.id === personaToBuild.id
           ? {
@@ -732,11 +538,6 @@ export default function PersonasPage() {
   }
 
   async function handleUploadCv(persona: Persona, file: File) {
-    if (!user) {
-      showToast("You must be logged in to upload a CV.", "error");
-      return;
-    }
-
     if (!isSupportedCvFile(file)) {
       showToast("Only PDF or DOCX files are supported.", "error");
       return;
@@ -800,7 +601,7 @@ export default function PersonasPage() {
       return;
     }
 
-    setPersonas((current) =>
+    updatePersonas((current) =>
       current.map((item) =>
         item.id === persona.id
           ? {
@@ -829,11 +630,6 @@ export default function PersonasPage() {
     event.target.value = "";
 
     if (!file) {
-      return;
-    }
-
-    if (!user) {
-      showToast("You must be logged in to upload a CV.", "error");
       return;
     }
 
@@ -915,7 +711,7 @@ export default function PersonasPage() {
       return;
     }
 
-    setPersonas((current) => [
+    updatePersonas((current) => [
       mapRowToPersona(data as Partial<Persona>),
       ...current,
     ]);
@@ -923,42 +719,9 @@ export default function PersonasPage() {
     setIsUploadingCv(false);
   }
 
-  async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      logSupabaseError("log out", error);
-      return;
-    }
-
-    setUser(null);
-    setPersonas([]);
+  function handleLogout() {
     setIsProfileMenuOpen(false);
     closeForm();
-  }
-
-  if (!isAuthReady) {
-    return (
-      <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
-          <p className="mt-2 text-sm text-slate-500">Loading session...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Profiles</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in to view and manage your personas.
-          </p>
-        </div>
-      </main>
-    );
   }
 
   return (
