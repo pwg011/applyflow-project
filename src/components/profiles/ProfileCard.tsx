@@ -47,10 +47,10 @@ export default function ProfileCard({
   onEdit,
 }: ProfileCardProps) {
   return (
-    <SurfacePanel className="flex min-h-[286px] flex-col rounded-lg bg-white/65 px-6 py-6">
+    <SurfacePanel className="flex min-h-[270px] flex-col rounded-lg border border-[#e1e3e6] bg-white/70 px-6 py-5 shadow-[0_14px_30px_rgba(0,0,0,0.035)]">
       <div className="flex items-start justify-between">
-        <span className="flex h-12 w-12 items-center justify-center rounded bg-[#e6e8eb] text-black">
-          <span className="h-6 w-6">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-[#d7d9dc] bg-[#e9ecef] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_8px_16px_rgba(0,0,0,0.04)]">
+          <span className="h-5 w-5">
             <ProfileIcon name={profile.icon} />
           </span>
         </span>
@@ -58,18 +58,18 @@ export default function ProfileCard({
           status={profile.status}
           tone={profile.statusTone}
           variant="tag"
-          className="tracking-[0.12em]"
+          className="rounded-[2px] border-[#d8dadd] bg-[#e7e9ec] px-2.5 py-1 text-[#4a4d50] tracking-[0.12em]"
         />
       </div>
 
-      <h2 className="mt-5 text-[20px] font-medium tracking-[-0.025em] text-[#191c1e]">
+      <h2 className="mt-4 text-[20px] font-medium tracking-[-0.025em] text-[#191c1e]">
         {profile.title}
       </h2>
-      <p className="mt-2 min-h-[48px] text-[15px] leading-[1.45] text-[#4b4b4d]">
+      <p className="mt-2 min-h-[42px] text-[15px] leading-[1.42] text-[#4b4b4d]">
         {profile.description}
       </p>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <div className="flex items-center justify-between">
           <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#4b4b4d]">
             Completion
@@ -78,7 +78,7 @@ export default function ProfileCard({
             {profile.completion}%
           </span>
         </div>
-        <div className="mt-1 h-1 overflow-hidden rounded-full bg-[#e5e7e9]">
+        <div className="mt-2 h-1 overflow-hidden rounded-[2px] bg-[#e4e6e9]">
           <div
             className={`h-full ${
               profile.status === "Draft" ? "bg-[#a9aaad]" : "bg-black"
@@ -88,20 +88,20 @@ export default function ProfileCard({
         </div>
       </div>
 
-      <p className="mt-4 text-[10px] text-[#76777b]">{profile.footerNote}</p>
+      <p className="mt-3 text-[10px] text-[#76777b]">{profile.footerNote}</p>
 
-      <div className="mt-auto flex gap-4 border-t border-[#e4e6e9] pt-4">
+      <div className="mt-auto flex gap-4 border-t border-[#e4e6e9] pt-3">
         <button
           type="button"
           onClick={onView}
-          className="h-[34px] flex-1 border border-[#d5d7da] bg-transparent text-[11px] font-semibold"
+          className="h-[36px] flex-1 border border-[#cfd2d6] bg-white/35 text-[11px] font-semibold text-[#222426] transition hover:bg-white/65"
         >
           View Profile
         </button>
         <button
           type="button"
           onClick={onEdit}
-          className="h-[34px] flex-1 rounded-[2px] bg-black text-[11px] font-semibold text-white"
+          className="h-[36px] flex-1 rounded-[2px] bg-black text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111]"
         >
           Edit Profile
         </button>
