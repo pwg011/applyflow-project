@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ApplyShell from "@/components/applyflow/ApplyShell";
+import ApplicationForm from "@/components/ApplicationForm";
 import ImportPreviewModal, {
   type ImportPreviewModalData,
 } from "@/components/ImportPreviewModal";
@@ -29,6 +30,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
+  const [isEditApplicationOpen, setIsEditApplicationOpen] = useState(false);
   const [importPreviewData, setImportPreviewData] =
     useState<ImportPreviewModalData>(demoImportedJob);
 
@@ -101,7 +103,10 @@ export default function Home() {
               ))}
             </div>
 
-            <SelectedJobPanel job={selectedJob} />
+            <SelectedJobPanel
+              job={selectedJob}
+              onEditDetails={() => setIsEditApplicationOpen(true)}
+            />
           </div>
         </section>
 
@@ -204,6 +209,12 @@ export default function Home() {
         onCancel={() => setIsImportPreviewOpen(false)}
         onSave={handleSaveImportedJob}
         isSaving={false}
+      />
+
+      <ApplicationForm
+        isOpen={isEditApplicationOpen}
+        job={selectedJob}
+        onClose={() => setIsEditApplicationOpen(false)}
       />
     </ApplyShell>
   );

@@ -10,7 +10,15 @@ function CalendarIcon() {
   );
 }
 
-export default function SelectedJobPanel({ job }: { job: ApplyFlowJob }) {
+type SelectedJobPanelProps = {
+  job: ApplyFlowJob;
+  onEditDetails?: () => void;
+};
+
+export default function SelectedJobPanel({
+  job,
+  onEditDetails,
+}: SelectedJobPanelProps) {
   const detailRole = job.level ? `${job.role} \u2014 ${job.level}` : job.role;
 
   return (
@@ -123,6 +131,7 @@ export default function SelectedJobPanel({ job }: { job: ApplyFlowJob }) {
       <div className="grid grid-cols-2 gap-4 border-t border-[#e4e6e9] bg-[#e5e7e9]/65 px-6 py-6">
         <button
           type="button"
+          onClick={onEditDetails}
           className="h-[34px] border border-[#adafb2] bg-transparent text-[11px] font-semibold text-[#191c1e] transition hover:bg-white/40"
         >
           Edit Details
