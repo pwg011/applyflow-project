@@ -13,7 +13,7 @@ export default function PrimaryButton({
   return (
     <button
       type="button"
-      className={`flex h-11 w-44 max-w-full items-center justify-center gap-4 rounded-xl border border-white/30 bg-[#4a4a4a] text-[11px] font-semibold uppercase tracking-[0.04em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] ${className}`}
+      className={`flex h-11 w-44 max-w-full items-center justify-center gap-4 rounded-xl border border-white/10 bg-black text-[11px] font-semibold uppercase tracking-[0.04em] text-white shadow-[0_10px_24px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.14)] transition hover:bg-[#111111] ${className}`}
       {...props}
     >
       {icon}

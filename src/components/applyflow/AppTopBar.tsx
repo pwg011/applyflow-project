@@ -39,7 +39,7 @@ export default function AppTopBar({
   userInitials = "PA",
 }: AppTopBarProps) {
   return (
-    <header className="flex h-[63px] items-center bg-[#4b4b4b] px-6 text-white xl:px-12">
+    <header className="flex h-[63px] items-center bg-black px-6 text-white xl:px-12">
       <div className="relative w-full max-w-[258px]">
         <span className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#c1c2c3]">
           <SearchIcon />
@@ -48,7 +48,7 @@ export default function AppTopBar({
           value={searchValue}
           onChange={(event) => onSearchChange?.(event.target.value)}
           placeholder={searchPlaceholder}
-          className="h-[27px] w-full rounded-full bg-white/5 pl-10 pr-4 text-[12px] font-medium text-white outline-none placeholder:text-white"
+          className="h-[27px] w-full rounded-full border border-white/10 bg-white/7 pl-10 pr-4 text-[12px] font-medium text-white outline-none placeholder:text-[#dedede] transition focus:border-white/20 focus:bg-white/10"
         />
       </div>
 
@@ -68,7 +68,7 @@ export default function AppTopBar({
         >
           <GearIcon />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#788087] bg-gradient-to-br from-[#eee5dc] via-[#9e7a63] to-[#2f3336] text-[9px] font-semibold shadow-inner">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-[#3a3a3a] via-[#111111] to-black text-[9px] font-semibold shadow-inner">
           {userInitials}
         </div>
       </div>
