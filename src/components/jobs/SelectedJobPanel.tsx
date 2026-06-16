@@ -16,98 +16,120 @@ export default function SelectedJobPanel({ job }: { job: ApplyFlowJob }) {
   return (
     <SurfacePanel
       as="aside"
-      className="overflow-hidden rounded-lg bg-white/55 shadow-[0_20px_40px_rgba(0,0,0,0.04)]"
+      className="overflow-hidden rounded-lg border border-[#e0e2e5] bg-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.04)]"
     >
       <div className="px-6 pb-5 pt-6">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
-          Selected Job
-        </p>
-        <div className="mt-4 flex items-start justify-between">
-          <span
-            className={`flex h-14 w-14 items-center justify-center rounded-[2px] text-[19px] font-semibold ${job.logoClass}`}
-          >
-            {job.initials}
-          </span>
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+            Selected Job
+          </p>
           <button
             type="button"
             aria-label="More actions"
-            className="text-[16px] font-bold tracking-[0.08em]"
+            className="flex h-8 w-8 items-center justify-center border border-[#d5d7da] bg-white/40 text-[15px] font-bold tracking-[0.08em] text-[#4b4b4d] transition hover:bg-white hover:text-black"
           >
             &middot;&middot;&middot;
           </button>
         </div>
-        <h2 className="mt-5 text-[20px] font-semibold tracking-[-0.035em] text-black">
-          {job.company}
-        </h2>
-        <p className="mt-1 max-w-[220px] text-[16px] leading-[1.45] text-[#4b4b4d]">
-          {detailRole}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {job.tags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-[#eef0f3] px-2 py-1 text-[8px] font-semibold uppercase"
-            >
-              {tag}
-            </span>
-          ))}
+
+        <div className="mt-5 flex items-start gap-4">
+          <span
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[2px] text-[20px] font-semibold shadow-[0_10px_20px_rgba(0,0,0,0.08)] ${job.logoClass}`}
+          >
+            {job.initials}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-[21px] font-semibold leading-tight tracking-[-0.035em] text-black">
+              {job.company}
+            </h2>
+            <p className="mt-1 text-[15px] leading-[1.45] text-[#4b4b4d]">
+              {detailRole}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-2">
           <StatusBadge
             status={job.detailStatus}
             tone={job.statusTone}
             variant="tag"
           />
-        </div>
-      </div>
-
-      <div className="border-t border-[#e4e6e9] px-6 py-6">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
-          Next Step
-        </p>
-        <div className="mt-4 border border-[#c7c9cc] bg-[#eceef1] px-4 py-4">
-          <div className="flex items-center gap-3">
-            <span className="h-5 w-5 text-black">
-              <CalendarIcon />
-            </span>
-            <span className="text-[14px] font-semibold">
-              {job.nextStep.title}
-            </span>
-          </div>
-          <p className="mt-3 text-[11px] leading-none text-[#4b4b4d]">
-            {job.nextStep.date} &bull; {job.nextStep.location}
-          </p>
-        </div>
-
-        <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
-          Application Log
-        </p>
-        <div className="mt-5 space-y-4">
-          {job.applicationLog.map((item, index) => (
-            <div
-              key={`${item.title}-${item.date}`}
-              className="relative border-l border-[#dfe1e4] pb-1 pl-4"
+          {job.tags.map((tag) => (
+            <span
+              key={tag}
+              className="border border-[#e0e2e5] bg-[#eef0f3] px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#4b4b4d]"
             >
-              <span
-                className={`absolute -left-[4px] top-1 h-2 w-2 rounded-full ${
-                  index === 0 ? "bg-black" : "bg-[#85878a]"
-                }`}
-              />
-              <p className="text-[14px] font-semibold">{item.title}</p>
-              <p className="mt-1 text-[10px] text-[#4b4b4d]">{item.date}</p>
-            </div>
+              {tag}
+            </span>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-4 bg-[#e5e7e9]/65 px-6 py-6">
+      <div className="space-y-6 border-t border-[#e4e6e9] px-6 py-6">
+        <div>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+            Next Step
+          </p>
+          <div className="mt-3 border border-[#c7c9cc] bg-[#eceef1]/85 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#d5d7da] bg-white/50 text-black">
+                <span className="h-4 w-4">
+                  <CalendarIcon />
+                </span>
+              </span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold leading-tight text-black">
+                  {job.nextStep.title}
+                </p>
+                <p className="mt-1 text-[11px] leading-tight text-[#4b4b4d]">
+                  {job.nextStep.date} &bull; {job.nextStep.location}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+            Application Log
+          </p>
+          <div className="relative mt-5 space-y-5 pl-6">
+            <div className="absolute bottom-2 left-[3px] top-2 w-px bg-[#dfe1e4]" />
+            {job.applicationLog.map((item, index) => (
+              <div key={`${item.title}-${item.date}`} className="relative">
+                <span
+                  className={`absolute -left-[26px] top-1.5 flex h-2.5 w-2.5 rounded-full ${
+                    index === 0 ? "bg-black" : "bg-[#c7c9cc]"
+                  }`}
+                />
+                <p
+                  className={`text-[14px] leading-tight ${
+                    index === 0
+                      ? "font-semibold text-black"
+                      : "font-medium text-[#191c1e]"
+                  }`}
+                >
+                  {item.title}
+                </p>
+                <p className="mt-1 text-[10px] leading-tight text-[#75859d]">
+                  {item.date}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 border-t border-[#e4e6e9] bg-[#e5e7e9]/65 px-6 py-6">
         <button
           type="button"
-          className="h-[34px] flex-1 border border-[#adafb2] bg-transparent text-[11px] font-semibold"
+          className="h-[34px] border border-[#adafb2] bg-transparent text-[11px] font-semibold text-[#191c1e] transition hover:bg-white/40"
         >
           Edit Details
         </button>
         <button
           type="button"
-          className="h-[34px] flex-1 rounded-[2px] bg-black text-[11px] font-semibold text-white"
+          className="h-[34px] rounded-[2px] bg-black text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
         >
           View Job
         </button>

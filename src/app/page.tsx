@@ -83,71 +83,79 @@ export default function Home() {
 
       {isImportOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 px-4 backdrop-blur-[6px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/10 px-5 backdrop-blur-[12px]"
           onClick={() => setIsImportOpen(false)}
         >
           <div
-            className="relative w-full max-w-[560px] overflow-hidden rounded-2xl border border-white/60 border-t-white/80 bg-white/75 px-8 py-10 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.06),0_18px_36px_-18px_rgba(0,0,0,0.08)] backdrop-blur-2xl sm:px-12 sm:py-12"
+            className="relative w-full max-w-[560px] overflow-hidden rounded-lg border border-white/65 border-b-slate-300/70 bg-gradient-to-br from-white/75 via-white/55 to-slate-100/45 shadow-[0_34px_90px_rgba(15,23,42,0.24),0_12px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-slate-900/5 backdrop-blur-[72px] backdrop-saturate-150"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => setIsImportOpen(false)}
-              className="absolute right-7 top-7 flex h-9 w-9 items-center justify-center rounded-full text-2xl leading-none text-[#7e8187] transition hover:bg-black/5 hover:text-black"
-              aria-label="Close import dialog"
-            >
-              &times;
-            </button>
-
-            <div className="space-y-3 pr-10">
+            <div className="flex items-start justify-between border-t border-white/90 bg-white/20 px-7 pb-6 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
               <div>
-                <h2 className="text-[32px] font-semibold leading-tight tracking-[-0.01em] text-black">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#4b4b4d]">
+                  New Application
+                </p>
+                <h2 className="mt-3 text-[28px] font-semibold leading-tight tracking-[-0.035em] text-black">
                   Import Job
                 </h2>
-                <p className="mt-3 text-[16px] leading-7 text-[#686266]">
+                <p className="mt-2 max-w-[390px] text-[15px] leading-6 text-[#4b4b4d]">
                   Paste a link, job post or description to get started.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportOpen(false)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/70 bg-white/45 text-2xl leading-none text-[#4b4b4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-white/70 hover:text-black"
+                aria-label="Close import dialog"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="border-t border-white/50 bg-white/10 px-7 py-6">
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Job Link
+                  </span>
+                  <input
+                    className="mt-2 h-12 w-full border border-white/65 bg-white/45 px-4 text-[14px] text-[#191c1e] shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.65)] outline-none transition placeholder:text-[#8f98a6] focus:border-slate-300 focus:bg-white/75"
+                    placeholder="https://company.com/careers/engineer-role..."
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Job Description
+                  </span>
+                  <textarea
+                    className="mt-2 min-h-[168px] w-full resize-none border border-white/65 bg-white/45 px-4 py-3 text-[14px] leading-6 text-[#191c1e] shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.65)] outline-none transition placeholder:text-[#8f98a6] focus:border-slate-300 focus:bg-white/75"
+                    placeholder="Or paste the full job description here"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-5 border border-white/60 bg-white/35 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_8px_20px_rgba(15,23,42,0.04)]">
+                <p className="text-[13px] leading-5 text-[#556379]">
+                  Our AI will automatically extract the company name, job title,
+                  and key requirements for you.
                 </p>
               </div>
             </div>
 
-            <div className="mt-10 overflow-hidden rounded-xl border border-slate-200/70 bg-[#f8fafc]/65 shadow-inner transition focus-within:border-slate-300 focus-within:bg-white/80">
-              <input
-                className="w-full border-0 border-b border-slate-200/70 bg-transparent px-6 py-4 text-[15px] text-[#191c1e] outline-none placeholder:text-[#94a3b8] focus:ring-0"
-                placeholder="https://company.com/careers/engineer-role..."
-              />
-              <textarea
-                className="min-h-[176px] w-full resize-none border-0 bg-transparent px-6 py-5 text-[15px] leading-6 text-[#191c1e] outline-none placeholder:text-[#94a3b8] focus:ring-0"
-                placeholder="Or paste the full job description here"
-              />
-            </div>
-
-            <div className="mt-7 flex items-start gap-3 px-1 text-[#556379]">
-              <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border border-[#8da0bb] text-[12px] font-semibold leading-none">
-                i
-              </span>
-              <p className="text-[14px] leading-6">
-                Our AI will automatically extract the company name, job title,
-                and key requirements for you.
-              </p>
-            </div>
-
-            <div className="mt-10 space-y-4">
+            <div className="grid grid-cols-2 gap-4 border-t border-white/60 bg-white/30 px-7 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-2xl">
               <button
                 type="button"
                 onClick={() => setIsImportOpen(false)}
-                className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#0f172a] px-5 text-[15px] font-medium tracking-wide text-white shadow-lg shadow-slate-200 transition hover:-translate-y-px hover:bg-black"
+                className="h-11 border border-white/70 bg-white/30 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#191c1e] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:bg-white/55"
               >
-                <span>Import</span>
-                <span aria-hidden="true" className="text-lg leading-none">
-                  &rarr;
-                </span>
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={() => setIsImportOpen(false)}
-                className="h-12 w-full text-[12px] font-semibold uppercase tracking-[0.18em] text-[#8a9ab0] transition hover:text-black"
+                className="h-11 rounded-[2px] bg-black text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
               >
-                Cancel
+                Import
               </button>
             </div>
           </div>
