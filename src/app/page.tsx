@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ApplyShell from "@/components/applyflow/ApplyShell";
+import ApplicationDetailsModal from "@/components/ApplicationDetailsModal";
 import ApplicationForm from "@/components/ApplicationForm";
 import DeleteApplicationModal from "@/components/DeleteApplicationModal";
 import ImportPreviewModal, {
@@ -33,6 +34,8 @@ export default function Home() {
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [isEditApplicationOpen, setIsEditApplicationOpen] = useState(false);
   const [isDeleteApplicationOpen, setIsDeleteApplicationOpen] = useState(false);
+  const [isApplicationDetailsOpen, setIsApplicationDetailsOpen] =
+    useState(false);
   const [importPreviewData, setImportPreviewData] =
     useState<ImportPreviewModalData>(demoImportedJob);
 
@@ -109,6 +112,7 @@ export default function Home() {
               job={selectedJob}
               onEditDetails={() => setIsEditApplicationOpen(true)}
               onDeleteApplication={() => setIsDeleteApplicationOpen(true)}
+              onViewJob={() => setIsApplicationDetailsOpen(true)}
             />
           </div>
         </section>
@@ -218,6 +222,12 @@ export default function Home() {
         isOpen={isEditApplicationOpen}
         job={selectedJob}
         onClose={() => setIsEditApplicationOpen(false)}
+      />
+
+      <ApplicationDetailsModal
+        isOpen={isApplicationDetailsOpen}
+        job={selectedJob}
+        onClose={() => setIsApplicationDetailsOpen(false)}
       />
 
       <DeleteApplicationModal

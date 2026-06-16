@@ -14,12 +14,14 @@ type SelectedJobPanelProps = {
   job: ApplyFlowJob;
   onEditDetails?: () => void;
   onDeleteApplication?: () => void;
+  onViewJob?: () => void;
 };
 
 export default function SelectedJobPanel({
   job,
   onEditDetails,
   onDeleteApplication,
+  onViewJob,
 }: SelectedJobPanelProps) {
   const detailRole = job.level ? `${job.role} \u2014 ${job.level}` : job.role;
 
@@ -142,6 +144,7 @@ export default function SelectedJobPanel({
         </button>
         <button
           type="button"
+          onClick={onViewJob}
           className="h-[34px] rounded-[2px] bg-black text-[11px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
         >
           View Job

@@ -1,859 +1,198 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import type { Application } from "@/types/application";
-import type { Persona } from "@/types/persona";
-
-type ApplicationStatus = "Applied" | "Interview" | "Offer" | "Rejected";
-type ApplicationId = Application["id"];
+import StatusBadge from "@/components/applyflow/StatusBadge";
+import type { ApplyFlowJob } from "@/data/applyflow";
 
 type ApplicationDetailsModalProps = {
-  selectedApplication: Application | null;
+  isOpen: boolean;
+  job: ApplyFlowJob;
   onClose: () => void;
-  onStatusChange: (
-    applicationId: ApplicationId,
-    status: ApplicationStatus,
-  ) => void | Promise<void>;
-  onEdit: (application: Application) => void;
-  onDelete: (application: Application) => void;
 };
 
-type PersonaFeedback = {
-  message: string;
-  tone: "success" | "error";
-};
-
-type AnalysisFeedback = {
-  message: string;
-  tone: "success" | "error";
-};
-
-type AnalysisField = {
-  label: string;
-  value?: string | null;
-};
-
-type JobAnalysisPayload = {
-  job_location: string | null;
-  job_deadline: string | null;
-  job_requirements: string | null;
-  job_responsibilities: string | null;
-  job_skills: string | null;
-  job_benefits: string | null;
-  application_instructions: string | null;
-};
-
-type JobAnalysisOverrides = Partial<
-  Pick<
-    Application,
-    | "job_location"
-    | "job_deadline"
-    | "job_requirements"
-    | "job_responsibilities"
-    | "job_skills"
-    | "job_benefits"
-    | "application_instructions"
-    | "analysis_status"
-    | "analyzed_at"
-  >
->;
-
-type PersistedAnalysisFields = Pick<
-  Application,
-  | "job_location"
-  | "job_deadline"
-  | "job_requirements"
-  | "job_responsibilities"
-  | "job_skills"
-  | "job_benefits"
-  | "application_instructions"
-  | "analysis_status"
-  | "analyzed_at"
->;
-
-function formatDate(dateApplied?: string | null) {
-  if (!dateApplied) {
-    return "Not provided";
-  }
-
-  return new Date(dateApplied).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function getApplicationHref(jobLink?: string | null) {
-  if (!jobLink) {
-    return "";
-  }
-
-  if (jobLink.startsWith("http://") || jobLink.startsWith("https://")) {
-    return jobLink;
-  }
-
-  return `https://${jobLink}`;
-}
-
-function hasContent(value?: string | null) {
-  return (value ?? "").trim() !== "";
-}
-
-function isJobAnalysisPayload(value: unknown): value is JobAnalysisPayload {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    "job_location" in candidate &&
-    "job_deadline" in candidate &&
-    "job_requirements" in candidate &&
-    "job_responsibilities" in candidate &&
-    "job_skills" in candidate &&
-    "job_benefits" in candidate &&
-    "application_instructions" in candidate
-  );
-}
-
-function mapAnalysisRow(
-  row: Partial<PersistedAnalysisFields> | null | undefined,
-): JobAnalysisOverrides {
-  return {
-    job_location: row?.job_location ?? null,
-    job_deadline: row?.job_deadline ?? null,
-    job_requirements: row?.job_requirements ?? null,
-    job_responsibilities: row?.job_responsibilities ?? null,
-    job_skills: row?.job_skills ?? null,
-    job_benefits: row?.job_benefits ?? null,
-    application_instructions: row?.application_instructions ?? null,
-    analysis_status: row?.analysis_status ?? null,
-    analyzed_at: row?.analyzed_at ?? null,
-  };
-}
-
-function getExistingAnalysis(application: Application): JobAnalysisPayload {
-  return {
-    job_location: application.job_location ?? null,
-    job_deadline: application.job_deadline ?? null,
-    job_requirements: application.job_requirements ?? null,
-    job_responsibilities: application.job_responsibilities ?? null,
-    job_skills: application.job_skills ?? null,
-    job_benefits: application.job_benefits ?? null,
-    application_instructions: application.application_instructions ?? null,
-  };
-}
-
-function hasSavedAnalysis(application: Application) {
-  return Object.values(getExistingAnalysis(application)).some((value) =>
-    hasContent(value),
-  );
-}
-
-function AnalysisSection({
-  application,
-  isAnalyzing,
-  analysisFeedback,
-  onAnalyze,
-}: {
-  application: Application;
-  isAnalyzing: boolean;
-  analysisFeedback: AnalysisFeedback | null;
-  onAnalyze: () => void | Promise<void>;
-}) {
-  const analysisFields: AnalysisField[] = [
-    { label: "Location", value: application.job_location },
-    { label: "Deadline", value: application.job_deadline },
-    { label: "Requirements", value: application.job_requirements },
-    {
-      label: "Responsibilities",
-      value: application.job_responsibilities,
-    },
-    { label: "Skills", value: application.job_skills },
-    { label: "Benefits", value: application.job_benefits },
-    {
-      label: "Application Instructions",
-      value: application.application_instructions,
-    },
-  ];
-
-  const populatedFields = analysisFields.filter((field) =>
-    hasContent(field.value),
-  );
-  const hasRawJobText = hasContent(application.raw_job_text);
-  const hasAnalysis = hasSavedAnalysis(application);
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Analysis
-        </p>
-
-        {hasRawJobText ? (
-          <button
-            type="button"
-            onClick={() => void onAnalyze()}
-            disabled={isAnalyzing}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isAnalyzing
-              ? hasAnalysis
-                ? "Improving..."
-                : "Analyzing..."
-              : hasAnalysis
-                ? "Improve Analysis"
-                : "Analyze Job"}
-          </button>
-        ) : null}
-      </div>
-
-      {populatedFields.length > 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-          <div className="space-y-4">
-            {populatedFields.map((field) => (
-              <div
-                key={field.label}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  {field.label}
-                </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                  {field.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-          No analysis available yet. AI insights will appear here.
-        </div>
-      )}
-
-      {hasAnalysis ? (
-        <p className="text-sm text-slate-500">
-          Analysis saved. You can improve it if more useful details are needed.
-        </p>
-      ) : null}
-
-      {analysisFeedback ? (
-        <p
-          className={`text-sm ${
-            analysisFeedback.tone === "success"
-              ? "text-slate-600"
-              : "text-red-600"
-          }`}
-        >
-          {analysisFeedback.message}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function JobPostingSection({ rawJobText }: { rawJobText?: string | null }) {
-  const [isJobPostingOpen, setIsJobPostingOpen] = useState(false);
-  const hasRawJobText = (rawJobText ?? "").trim() !== "";
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Job Posting
-        </p>
-
-        {hasRawJobText ? (
-          <button
-            type="button"
-            onClick={() => setIsJobPostingOpen((current) => !current)}
-            className="text-sm font-medium text-slate-700 transition hover:text-slate-900"
-          >
-            {isJobPostingOpen ? "Hide Job Posting" : "View Job Posting"}
-          </button>
-        ) : null}
-      </div>
-
-      {hasRawJobText ? (
-        isJobPostingOpen ? (
-          <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700 sm:max-h-72">
-            {rawJobText}
-          </div>
-        ) : null
-      ) : (
-        <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-          No job posting text saved for this application.
-        </p>
-      )}
-    </div>
-  );
+function formatJobLink(company: string) {
+  return `${company.toLowerCase().replaceAll(" ", "")}.com/careers`;
 }
 
 export default function ApplicationDetailsModal({
-  selectedApplication,
+  isOpen,
+  job,
   onClose,
-  onStatusChange,
-  onEdit,
-  onDelete,
 }: ApplicationDetailsModalProps) {
-  const [
-    analysisOverridesByApplicationId,
-    setAnalysisOverridesByApplicationId,
-  ] = useState<Record<string, JobAnalysisOverrides>>({});
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const [isPersonasLoading, setIsPersonasLoading] = useState(false);
-  const [isSavingPersona, setIsSavingPersona] = useState(false);
-  const [personaSelectionByApplicationId, setPersonaSelectionByApplicationId] =
-    useState<Record<string, string>>({});
-  const [personaFeedback, setPersonaFeedback] =
-    useState<PersonaFeedback | null>(null);
-  const [isAnalyzingJob, setIsAnalyzingJob] = useState(false);
-  const [analysisFeedback, setAnalysisFeedback] =
-    useState<AnalysisFeedback | null>(null);
-
-  const activeApplication = useMemo(() => {
-    if (!selectedApplication) {
-      return null;
-    }
-
-    return {
-      ...selectedApplication,
-      ...(analysisOverridesByApplicationId[selectedApplication.id] ?? {}),
-    };
-  }, [analysisOverridesByApplicationId, selectedApplication]);
-
-  const currentPersonaId = activeApplication
-    ? (personaSelectionByApplicationId[activeApplication.id] ??
-      activeApplication.persona_id ??
-      "")
-    : "";
-
-  useEffect(() => {
-    if (!activeApplication) {
-      return;
-    }
-
-    let isActive = true;
-
-    async function loadPersonas() {
-      setIsPersonasLoading(true);
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        if (isActive) {
-          setPersonas([]);
-          setIsPersonasLoading(false);
-        }
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("personas")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("created_at", { ascending: false });
-
-      if (!isActive) {
-        return;
-      }
-
-      if (error) {
-        setPersonas([]);
-        setPersonaFeedback({
-          message: error.message || "Could not load personas.",
-          tone: "error",
-        });
-        setIsPersonasLoading(false);
-        return;
-      }
-
-      setPersonas((data ?? []) as Persona[]);
-      setIsPersonasLoading(false);
-    }
-
-    void loadPersonas();
-
-    return () => {
-      isActive = false;
-    };
-  }, [activeApplication]);
-
-  useEffect(() => {
-    if (!personaFeedback) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setPersonaFeedback(null);
-    }, 2500);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [personaFeedback]);
-
-  useEffect(() => {
-    if (!selectedApplication) {
-      return;
-    }
-
-    let isActive = true;
-    const applicationId = selectedApplication.id;
-
-    async function loadPersistedAnalysis() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("applications")
-        .select(
-          [
-            "job_location",
-            "job_deadline",
-            "job_requirements",
-            "job_responsibilities",
-            "job_skills",
-            "job_benefits",
-            "application_instructions",
-            "analysis_status",
-            "analyzed_at",
-          ].join(","),
-        )
-        .eq("id", applicationId)
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (!isActive || error || !data) {
-        return;
-      }
-
-      setAnalysisOverridesByApplicationId((current) => ({
-        ...current,
-        [applicationId]: {
-          ...(current[applicationId] ?? {}),
-          ...mapAnalysisRow(data as Partial<PersistedAnalysisFields>),
-        },
-      }));
-    }
-
-    void loadPersistedAnalysis();
-
-    return () => {
-      isActive = false;
-    };
-  }, [selectedApplication]);
-
-  async function handleAnalyzeJob() {
-    if (!activeApplication || !hasContent(activeApplication.raw_job_text)) {
-      return;
-    }
-
-    const shouldImproveExistingAnalysis = hasSavedAnalysis(activeApplication);
-
-    if (shouldImproveExistingAnalysis) {
-      const shouldContinue = window.confirm(
-        "This will improve the saved analysis using the original job post and existing analysis. Continue?",
-      );
-
-      if (!shouldContinue) {
-        return;
-      }
-    }
-
-    setIsAnalyzingJob(true);
-    setAnalysisFeedback(null);
-
-    try {
-      const {
-        data: { session: analysisSession },
-      } = await supabase.auth.getSession();
-
-      if (!analysisSession?.access_token) {
-        setAnalysisFeedback({
-          message: "You must be logged in to analyze a job.",
-          tone: "error",
-        });
-        return;
-      }
-
-      const response = await fetch("/api/analyze-job", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${analysisSession.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          shouldImproveExistingAnalysis
-            ? {
-                raw_job_text: activeApplication.raw_job_text,
-                existing_analysis: getExistingAnalysis(activeApplication),
-              }
-            : {
-                raw_job_text: activeApplication.raw_job_text,
-              },
-        ),
-      });
-
-      const analysisData = (await response.json()) as unknown;
-      const errorMessage =
-        analysisData && typeof analysisData === "object" && "error" in analysisData
-          ? (analysisData as { error?: unknown }).error
-          : null;
-
-      if (!response.ok || errorMessage) {
-        setAnalysisFeedback({
-          message:
-            typeof errorMessage === "string" && errorMessage
-              ? errorMessage
-              : "Failed to analyze job",
-          tone: "error",
-        });
-        return;
-      }
-
-      if (!analysisData || typeof analysisData !== "object") {
-        setAnalysisFeedback({
-          message: "Failed to analyze job",
-          tone: "error",
-        });
-        return;
-      }
-
-      if (!isJobAnalysisPayload(analysisData)) {
-        setAnalysisFeedback({
-          message: "The analysis response was incomplete.",
-          tone: "error",
-        });
-        return;
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        throw new Error("You must be logged in to analyze a job.");
-      }
-
-      const analyzedAt = new Date().toISOString();
-      const updates = {
-        job_location: analysisData.job_location,
-        job_deadline: analysisData.job_deadline,
-        job_requirements: analysisData.job_requirements,
-        job_responsibilities: analysisData.job_responsibilities,
-        job_skills: analysisData.job_skills,
-        job_benefits: analysisData.job_benefits,
-        application_instructions: analysisData.application_instructions,
-        analysis_status: "analyzed",
-        analyzed_at: analyzedAt,
-      };
-
-      const { data: updateData, error: updateError } = await supabase
-        .from("applications")
-        .update(updates)
-        .select(
-          [
-            "job_location",
-            "job_deadline",
-            "job_requirements",
-            "job_responsibilities",
-            "job_skills",
-            "job_benefits",
-            "application_instructions",
-            "analysis_status",
-            "analyzed_at",
-          ].join(","),
-        )
-        .eq("id", activeApplication.id)
-        .eq("user_id", session.user.id);
-
-      if (updateError) {
-        throw new Error(updateError.message || "Could not save analysis.");
-      }
-
-      const savedAnalysis = Array.isArray(updateData)
-        ? updateData[0]
-        : updateData;
-
-      if (!savedAnalysis) {
-        throw new Error("Could not save analysis.");
-      }
-
-      setAnalysisOverridesByApplicationId((current) => ({
-        ...current,
-        [activeApplication.id]: {
-          ...(current[activeApplication.id] ?? {}),
-          ...mapAnalysisRow(updates),
-          ...mapAnalysisRow(savedAnalysis as Partial<PersistedAnalysisFields>),
-        },
-      }));
-      setAnalysisFeedback({
-        message: shouldImproveExistingAnalysis
-          ? "Analysis improved successfully."
-          : "Analysis saved successfully.",
-        tone: "success",
-      });
-    } catch (error) {
-      setAnalysisFeedback({
-        message:
-          error instanceof Error
-            ? error.message
-            : "Could not analyze this job posting.",
-        tone: "error",
-      });
-    } finally {
-      setIsAnalyzingJob(false);
-    }
-  }
-
-  async function handlePersonaChange(personaId: string) {
-    if (!activeApplication) {
-      return;
-    }
-
-    setIsSavingPersona(true);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.user) {
-      setPersonaFeedback({
-        message: "You must be logged in to link a persona.",
-        tone: "error",
-      });
-      setIsSavingPersona(false);
-      return;
-    }
-
-    const nextPersonaId = personaId || null;
-    const { error } = await supabase
-      .from("applications")
-      .update({ persona_id: nextPersonaId })
-      .eq("id", activeApplication.id)
-      .eq("user_id", session.user.id);
-
-    if (error) {
-      setPersonaFeedback({
-        message: error.message || "Could not update persona.",
-        tone: "error",
-      });
-      setIsSavingPersona(false);
-      return;
-    }
-
-    setPersonaSelectionByApplicationId((current) => ({
-      ...current,
-      [activeApplication.id]: personaId,
-    }));
-    setPersonaFeedback({
-      message: personaId ? "Persona linked successfully." : "Persona cleared.",
-      tone: "success",
-    });
-    setIsSavingPersona(false);
-  }
+  const role = job.level ? `${job.role} - ${job.level}` : job.role;
+  const jobLink = formatJobLink(job.company);
 
   return (
-    <div
-      className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 px-6 backdrop-blur-sm transition-all duration-300 ${
-        selectedApplication
-          ? "pointer-events-auto opacity-100"
-          : "pointer-events-none opacity-0"
-      }`}
-      onClick={onClose}
-      aria-hidden={!selectedApplication}
-    >
+    <>
       <div
-        className={`flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
-          selectedApplication
-            ? "translate-y-0 scale-100"
-            : "translate-y-4 scale-95"
+        className={`fixed inset-0 z-[62] bg-slate-950/8 backdrop-blur-[6px] transition-opacity duration-300 ${
+          isOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         }`}
-        onClick={(event) => event.stopPropagation()}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <aside
+        className={`fixed right-0 top-0 z-[63] flex h-full w-full max-w-[540px] flex-col border-l border-slate-300/45 bg-gradient-to-br from-white/80 via-white/64 to-slate-100/50 shadow-[-24px_0_68px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.82)] ring-1 ring-white/70 backdrop-blur-[56px] backdrop-saturate-150 transition-transform duration-300 ease-out ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        aria-hidden={!isOpen}
       >
-        {activeApplication ? (
-          <>
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
-              <div>
-                <p className="text-sm text-slate-500">Application details</p>
-                <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  {activeApplication.company}
-                </h3>
-                <p className="mt-1 text-sm text-slate-600">
-                  {activeApplication.role}
+        <header className="flex shrink-0 items-start justify-between border-t border-white/90 border-b border-slate-200/55 bg-white/26 px-7 pb-6 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#4b4b4d]">
+              Application Details
+            </p>
+            <div className="mt-4 flex items-start gap-4">
+              <span
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[2px] text-[20px] font-semibold shadow-[0_10px_20px_rgba(0,0,0,0.08)] ${job.logoClass}`}
+              >
+                {job.initials}
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-[28px] font-semibold leading-tight tracking-[-0.04em] text-black">
+                  {job.company}
+                </h2>
+                <p className="mt-1 text-[15px] leading-6 text-[#4b4b4d]">
+                  {role}
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close modal"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-              >
-                X
-              </button>
             </div>
+          </div>
 
-            <div className="space-y-6 overflow-y-auto px-6 py-5 pr-4">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Status
-                  </p>
-                  <select
-                    value={activeApplication.status}
-                    onChange={(event) =>
-                      onStatusChange(
-                        activeApplication.id,
-                        event.target.value as ApplicationStatus,
-                      )
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                  >
-                    <option>Applied</option>
-                    <option>Interview</option>
-                    <option>Offer</option>
-                    <option>Rejected</option>
-                  </select>
-                </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/70 bg-white/45 text-2xl leading-none text-[#4b4b4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-white/70 hover:text-black"
+            aria-label="Close application details"
+          >
+            &times;
+          </button>
+        </header>
 
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Date applied
-                  </p>
-                  <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {formatDate(activeApplication.date_applied)}
-                  </p>
-                </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6 [scrollbar-color:#d5d8de_transparent] [scrollbar-width:thin]">
+          <section className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                Status
+              </p>
+              <div className="mt-3">
+                <StatusBadge
+                  status={job.detailStatus}
+                  tone={job.statusTone}
+                  variant="tag"
+                />
               </div>
+            </div>
 
-              {activeApplication.job_url ? (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Job link
-                  </p>
-                  <a
-                    href={getApplicationHref(activeApplication.job_url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block truncate rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
+            <div className="rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                Source
+              </p>
+              <p className="mt-3 text-[13px] font-semibold text-[#273142]">
+                {job.source}
+              </p>
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+            <div className="flex flex-wrap gap-2">
+              {job.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-[3px] border border-white/70 bg-white/46 px-3 py-1.5 text-[11px] font-semibold text-[#3d4655] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl"
+                >
+                  {tag}
+                </span>
+              ))}
+              {job.level ? (
+                <span className="rounded-[3px] border border-white/70 bg-white/46 px-3 py-1.5 text-[11px] font-semibold text-[#3d4655] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl">
+                  {job.level}
+                </span>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+              Next Step
+            </p>
+            <div className="mt-3 border border-white/70 bg-white/44 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+              <p className="text-[15px] font-semibold text-black">
+                {job.nextStep.title}
+              </p>
+              <p className="mt-1 text-[12px] leading-5 text-[#596273]">
+                {job.nextStep.date} - {job.nextStep.location}
+              </p>
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+              Notes
+            </p>
+            <p className="mt-3 text-[14px] leading-6 text-[#273142]">
+              {job.note}
+            </p>
+            <div className="mt-4 border-t border-white/60 pt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                Job Link
+              </p>
+              <p className="mt-2 truncate text-[13px] font-medium text-[#273142]">
+                {jobLink}
+              </p>
+            </div>
+          </section>
+
+          <section className="mt-4 pb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+              Application Log
+            </p>
+            <div className="relative mt-5 space-y-5 pl-7">
+              <div className="absolute bottom-2 left-[4px] top-2 w-px bg-[#d7dbe0]" />
+              {job.applicationLog.map((item, index) => (
+                <div key={`${item.title}-${item.date}`} className="relative">
+                  <span
+                    className={`absolute -left-[28px] top-1.5 flex h-3 w-3 rounded-full border-2 border-white shadow-sm ${
+                      index === 0 ? "bg-black" : "bg-[#c7c9cc]"
+                    }`}
+                  />
+                  <p
+                    className={`text-[14px] leading-tight ${
+                      index === 0
+                        ? "font-semibold text-black"
+                        : "font-medium text-[#191c1e]"
+                    }`}
                   >
-                    {activeApplication.job_url}
-                  </a>
-                </div>
-              ) : null}
-
-              {activeApplication.notes ? (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Notes
+                    {item.title}
                   </p>
-                  <p className="rounded-2xl bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700">
-                    {activeApplication.notes}
+                  <p className="mt-1 text-[10px] leading-tight text-[#75859d]">
+                    {item.date}
                   </p>
                 </div>
-              ) : null}
-
-              <JobPostingSection
-                key={activeApplication.id}
-                rawJobText={activeApplication.raw_job_text}
-              />
-
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Persona
-                </p>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="applicationPersona"
-                      className="text-sm font-medium text-slate-700"
-                    >
-                      Linked persona
-                    </label>
-                    <select
-                      id="applicationPersona"
-                      value={currentPersonaId}
-                      onChange={(event) =>
-                        void handlePersonaChange(event.target.value)
-                      }
-                      disabled={isPersonasLoading || isSavingPersona}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      <option value="">No persona selected</option>
-                      {personas.map((persona) => (
-                        <option key={persona.id} value={persona.id}>
-                          {persona.display_name}
-                          {persona.professional_title
-                            ? ` - ${persona.professional_title}`
-                            : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mt-3 min-h-5 text-sm">
-                    {isPersonasLoading ? (
-                      <p className="text-slate-500">Loading personas...</p>
-                    ) : personaFeedback ? (
-                      <p
-                        className={
-                          personaFeedback.tone === "success"
-                            ? "text-slate-700"
-                            : "text-red-600"
-                        }
-                      >
-                        {personaFeedback.message}
-                      </p>
-                    ) : (
-                      <p className="text-slate-500">
-                        Choose a persona to tailor future AI workflows for this
-                        application.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <AnalysisSection
-                application={activeApplication}
-                isAnalyzing={isAnalyzingJob}
-                analysisFeedback={analysisFeedback}
-                onAnalyze={handleAnalyzeJob}
-              />
+              ))}
             </div>
+          </section>
+        </div>
 
-            <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
-              <button
-                type="button"
-                onClick={() => onDelete(activeApplication)}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-              >
-                Delete Application
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onEdit(activeApplication)}
-                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-              >
-                Edit Application
-              </button>
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
+        <footer className="grid shrink-0 grid-cols-2 gap-4 border-t border-slate-200/55 bg-white/40 px-7 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-2xl">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 border border-white/70 bg-white/30 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#191c1e] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:bg-white/55"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 rounded-[2px] bg-black text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
+          >
+            Done
+          </button>
+        </footer>
+      </aside>
+    </>
   );
 }
