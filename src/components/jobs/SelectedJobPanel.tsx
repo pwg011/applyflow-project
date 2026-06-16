@@ -13,11 +13,13 @@ function CalendarIcon() {
 type SelectedJobPanelProps = {
   job: ApplyFlowJob;
   onEditDetails?: () => void;
+  onDeleteApplication?: () => void;
 };
 
 export default function SelectedJobPanel({
   job,
   onEditDetails,
+  onDeleteApplication,
 }: SelectedJobPanelProps) {
   const detailRole = job.level ? `${job.role} \u2014 ${job.level}` : job.role;
 
@@ -33,7 +35,9 @@ export default function SelectedJobPanel({
           </p>
           <button
             type="button"
-            aria-label="More actions"
+            onClick={onDeleteApplication}
+            aria-label="Delete application"
+            title="Delete application"
             className="flex h-8 w-8 items-center justify-center border border-[#d5d7da] bg-white/40 text-[15px] font-bold tracking-[0.08em] text-[#4b4b4d] transition hover:bg-white hover:text-black"
           >
             &middot;&middot;&middot;
