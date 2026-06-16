@@ -2,16 +2,35 @@
 
 import { useMemo, useState } from "react";
 import ApplyShell from "@/components/applyflow/ApplyShell";
+import ImportPreviewModal, {
+  type ImportPreviewModalData,
+} from "@/components/ImportPreviewModal";
 import PageHeader from "@/components/applyflow/PageHeader";
 import JobRow from "@/components/jobs/JobRow";
 import SelectedJobPanel from "@/components/jobs/SelectedJobPanel";
 import StatCard from "@/components/jobs/StatCard";
 import { jobs, stats } from "@/data/applyflow";
 
+const demoImportedJob: ImportPreviewModalData = {
+  company: "Lumina Aerospace",
+  role: "Senior Design Lead",
+  job_url: "https://linkedin.com/jobs/view/382910485",
+  date_applied: "16/06/2026",
+  source: "LinkedIn",
+  location: "Remote / San Francisco",
+  employmentType: "Full-time",
+  compensation: "$180k - $240k",
+  summary:
+    "As Senior Design Lead, you will guide the visual evolution of aerospace interface systems, partner with engineering teams, mentor designers, and shape a design system that balances technical complexity with intuitive product quality. Requirements include 8+ years in UI/UX, strong systems thinking, and senior-level Figma experience.",
+};
+
 export default function Home() {
   const [selectedJobId, setSelectedJobId] = useState("northstar-labs");
   const [searchQuery, setSearchQuery] = useState("");
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
+  const [importPreviewData, setImportPreviewData] =
+    useState<ImportPreviewModalData>(demoImportedJob);
 
   const selectedJob =
     jobs.find((job) => job.id === selectedJobId) ?? jobs[0];
@@ -28,6 +47,21 @@ export default function Home() {
         job.role.toLowerCase().includes(query),
     );
   }, [searchQuery]);
+
+  function handleImportJob() {
+    setImportPreviewData(demoImportedJob);
+    setIsImportOpen(false);
+    setIsImportPreviewOpen(true);
+  }
+
+  function handleBackToImport() {
+    setIsImportPreviewOpen(false);
+    setIsImportOpen(true);
+  }
+
+  function handleSaveImportedJob() {
+    setIsImportPreviewOpen(false);
+  }
 
   return (
     <ApplyShell
@@ -152,7 +186,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={() => setIsImportOpen(false)}
+                onClick={handleImportJob}
                 className="h-11 rounded-[2px] bg-black text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
               >
                 Import
@@ -161,6 +195,16 @@ export default function Home() {
           </div>
         </div>
       ) : null}
+
+      <ImportPreviewModal
+        isOpen={isImportPreviewOpen}
+        data={importPreviewData}
+        onChange={setImportPreviewData}
+        onBack={handleBackToImport}
+        onCancel={() => setIsImportPreviewOpen(false)}
+        onSave={handleSaveImportedJob}
+        isSaving={false}
+      />
     </ApplyShell>
   );
 }
