@@ -362,7 +362,7 @@ export default function ProfilesPage() {
           onClick={() => setIsCreateOpen(false)}
         >
           <section
-            className="relative flex max-h-[86vh] w-full max-w-[860px] flex-col overflow-hidden rounded-lg border border-white/65 bg-gradient-to-br from-white/78 via-white/62 to-slate-100/48 shadow-[0_34px_80px_rgba(15,23,42,0.22),0_1px_0_rgba(255,255,255,0.85)_inset] ring-1 ring-slate-900/5 backdrop-blur-[64px] backdrop-saturate-150"
+            className="relative flex max-h-[84vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[8px] border border-white/80 border-b-slate-300/75 bg-gradient-to-br from-white/86 via-white/68 to-slate-100/56 shadow-[0_38px_90px_rgba(15,23,42,0.26),0_14px_34px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-slate-900/10 backdrop-blur-[72px] backdrop-saturate-150"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -375,16 +375,16 @@ export default function ProfilesPage() {
             </button>
 
             <div className="flex min-h-0 flex-1">
-              <aside className="hidden w-[226px] shrink-0 flex-col justify-between border-r border-white/60 bg-gradient-to-b from-white/58 via-white/40 to-white/28 px-5 py-5 text-left shadow-[1px_0_0_rgba(15,23,42,0.05)] backdrop-blur-2xl md:flex">
-                <div className="w-full">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-white/70 bg-white/55 text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-                    <span className="text-[20px] font-medium tracking-[-0.03em] text-black">
+              <aside className="hidden w-[210px] shrink-0 flex-col justify-between border-r border-white/70 bg-white/36 px-4 py-4 text-left shadow-[1px_0_0_rgba(15,23,42,0.06)] backdrop-blur-2xl md:flex">
+                <div className="rounded-[6px] border border-white/75 bg-white/54 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.86)_inset]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-[#d7d9dc] bg-[#e9ecef] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_8px_16px_rgba(0,0,0,0.04)]">
+                    <span className="text-[18px] font-medium tracking-[-0.03em] text-black">
                       JD
                     </span>
                   </div>
 
                   <div className="mt-4">
-                    <h2 className="text-[19px] font-medium leading-tight tracking-[-0.025em] text-[#191c1e]">
+                    <h2 className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-[#191c1e]">
                       Identity Preview
                     </h2>
                     <p className="mt-2 inline-flex rounded-[2px] border border-white/70 bg-white/55 px-2.5 py-1 text-[8px] font-semibold uppercase leading-none tracking-[0.12em] text-[#4a4d50] shadow-[0_1px_0_rgba(255,255,255,0.85)_inset]">
@@ -411,7 +411,7 @@ export default function ProfilesPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[4px] border border-white/65 bg-white/45 p-4 shadow-[0_16px_30px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.8)_inset] backdrop-blur-xl">
+                <div className="rounded-[5px] border border-white/70 bg-white/46 p-3 shadow-[0_12px_24px_rgba(15,23,42,0.06),0_1px_0_rgba(255,255,255,0.8)_inset] backdrop-blur-xl">
                   <span className="mb-3 flex h-8 w-8 items-center justify-center rounded-[4px] border border-white/70 bg-white/55 text-[12px] font-semibold text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                     OK
                   </span>
@@ -424,8 +424,8 @@ export default function ProfilesPage() {
                 </div>
               </aside>
 
-              <div className="min-h-0 flex-1 overflow-y-auto bg-gradient-to-br from-white/50 via-white/36 to-slate-100/24 px-6 py-5 pr-5 backdrop-blur-xl [scrollbar-color:#c7c9cc_transparent] [scrollbar-width:thin] sm:px-7 md:px-8">
-                <div className="max-w-[574px] space-y-6 pr-5">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-gradient-to-br from-white/48 via-white/34 to-slate-100/22 px-5 py-4 backdrop-blur-xl [scrollbar-color:#c7c9cc_transparent] [scrollbar-width:thin] sm:px-6">
+                <div className="max-w-[500px] space-y-5">
                   <div className="space-y-1 pr-10 md:hidden">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#4b4b4d]">
                       Identity Preview
@@ -435,26 +435,26 @@ export default function ProfilesPage() {
                     </h2>
                   </div>
 
-                  <section className="space-y-4">
+                  <section className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-7 w-7 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[12px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
+                        className="flex h-6 w-6 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[11px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
                         aria-hidden="true"
                       >
                         1
                       </span>
-                      <h3 className="text-[20px] font-medium leading-tight tracking-[-0.025em] text-[#191c1e]">
+                      <h3 className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-[#191c1e]">
                         Personal Foundation
                       </h3>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
                         <label className="block text-[12px] font-medium text-[#4b4b4d]">
                           Full Legal Name
                         </label>
                         <input
-                          className="h-10 w-full rounded-[4px] border border-white/70 bg-white/68 px-3.5 text-[14px] text-black shadow-[inset_0_1px_2px_rgba(15,23,42,0.06),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/78 focus:ring-2 focus:ring-black/5"
+                          className="h-10 w-full rounded-[4px] border border-[#d8dbe0] bg-white/72 px-3.5 text-[14px] text-black shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/84 focus:ring-2 focus:ring-black/5"
                           placeholder="Johnathan Doe"
                           type="text"
                         />
@@ -464,7 +464,7 @@ export default function ProfilesPage() {
                           Current Title
                         </label>
                         <input
-                          className="h-10 w-full rounded-[4px] border border-white/70 bg-white/68 px-3.5 text-[14px] text-black shadow-[inset_0_1px_2px_rgba(15,23,42,0.06),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/78 focus:ring-2 focus:ring-black/5"
+                          className="h-10 w-full rounded-[4px] border border-[#d8dbe0] bg-white/72 px-3.5 text-[14px] text-black shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/84 focus:ring-2 focus:ring-black/5"
                           placeholder="Chief Strategy Officer"
                           type="text"
                         />
@@ -472,22 +472,22 @@ export default function ProfilesPage() {
                     </div>
                   </section>
 
-                  <section className="space-y-4">
+                  <section className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-7 w-7 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[12px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
+                        className="flex h-6 w-6 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[11px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
                         aria-hidden="true"
                       >
                         2
                       </span>
-                      <h3 className="text-[20px] font-medium leading-tight tracking-[-0.025em] text-[#191c1e]">
+                      <h3 className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-[#191c1e]">
                         Strategic Goal
                       </h3>
                     </div>
 
                     <div className="space-y-2">
                       <div className="relative">
-                        <select className="h-10 w-full appearance-none rounded-[4px] border border-white/70 bg-white/68 px-3.5 text-[14px] text-black shadow-[inset_0_1px_2px_rgba(15,23,42,0.06),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition focus:border-white focus:bg-white/78 focus:ring-2 focus:ring-black/5">
+                        <select className="h-10 w-full appearance-none rounded-[4px] border border-[#d8dbe0] bg-white/72 px-3.5 text-[14px] text-black shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition focus:border-white focus:bg-white/84 focus:ring-2 focus:ring-black/5">
                           <option>Immediate Executive Transition</option>
                           <option>Strategic Board Advisory</option>
                           <option>Startup Scalability Guidance</option>
@@ -506,26 +506,26 @@ export default function ProfilesPage() {
                     </div>
                   </section>
 
-                  <section className="space-y-4">
+                  <section className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-7 w-7 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[12px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
+                        className="flex h-6 w-6 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[11px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
                         aria-hidden="true"
                       >
                         3
                       </span>
-                      <h3 className="text-[20px] font-medium leading-tight tracking-[-0.025em] text-[#191c1e]">
+                      <h3 className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-[#191c1e]">
                         Core Competencies
                       </h3>
                     </div>
 
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-2">
                       {["Crisis Management", "M&A Strategy", "Public Relations"].map(
                         (competency) => (
                           <button
                             key={competency}
                             type="button"
-                            className="rounded-[4px] border border-black bg-black px-3.5 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.14)] transition hover:bg-[#111111]"
+                            className="rounded-[3px] border border-[#d8dbe0] bg-white/58 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#273142] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-white/72"
                           >
                             {competency}
                           </button>
@@ -533,29 +533,29 @@ export default function ProfilesPage() {
                       )}
                       <button
                         type="button"
-                        className="rounded-[4px] border border-dashed border-white/75 bg-white/45 px-3.5 py-2 text-[12px] font-semibold text-black shadow-[0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-xl transition hover:bg-white/65"
+                        className="rounded-[3px] border border-dashed border-[#cfd2d6] bg-white/38 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-black shadow-[0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-xl transition hover:bg-white/65"
                       >
                         + Add Competency
                       </button>
                     </div>
                   </section>
 
-                  <section className="space-y-4 pb-2">
+                  <section className="space-y-3 pb-1">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-7 w-7 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[12px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
+                        className="flex h-6 w-6 items-center justify-center rounded-[4px] border border-white/70 bg-white/58 text-[11px] font-semibold text-[#4b4b4d] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_8px_16px_rgba(15,23,42,0.05)] backdrop-blur-xl"
                         aria-hidden="true"
                       >
                         4
                       </span>
-                      <h3 className="text-[20px] font-medium leading-tight tracking-[-0.025em] text-[#191c1e]">
+                      <h3 className="text-[17px] font-semibold leading-tight tracking-[-0.025em] text-[#191c1e]">
                         Executive Narrative
                       </h3>
                     </div>
 
                     <div className="space-y-2">
                       <textarea
-                        className="w-full resize-none rounded-[4px] border border-white/70 bg-white/68 p-3.5 text-[14px] text-black shadow-[inset_0_1px_2px_rgba(15,23,42,0.06),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/78 focus:ring-2 focus:ring-black/5"
+                        className="w-full resize-none rounded-[4px] border border-[#d8dbe0] bg-white/72 p-3.5 text-[14px] text-black shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.8)] outline-none backdrop-blur-xl transition placeholder:text-[#8e939a] focus:border-white focus:bg-white/84 focus:ring-2 focus:ring-black/5"
                         placeholder="Define your unique leadership philosophy and core value proposition..."
                         rows={4}
                       />
@@ -573,28 +573,19 @@ export default function ProfilesPage() {
               </div>
             </div>
 
-            <footer className="flex shrink-0 items-center justify-between border-t border-white/65 bg-white/58 px-6 py-3 shadow-[0_-16px_32px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl sm:px-7 md:px-8">
-              <div className="hidden items-center gap-2 text-[#4b4b4d] sm:flex">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
-                  Secure
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">
-                  End-to-End Encrypted
-                </span>
-              </div>
-
-              <div className="ml-auto flex items-center gap-4">
+            <footer className="flex shrink-0 items-center justify-end border-t border-white/70 bg-white/62 px-5 py-3 shadow-[0_-16px_32px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl sm:px-6">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="h-[38px] rounded-[4px] border border-white/75 bg-white/50 px-6 text-[13px] font-semibold text-[#222426] shadow-[0_8px_18px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl transition hover:bg-white/72 active:scale-95"
+                  className="h-[38px] border border-white/75 bg-white/50 px-6 text-[12px] font-semibold text-[#222426] shadow-[0_8px_18px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl transition hover:bg-white/72 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="relative h-[38px] overflow-hidden rounded-[4px] bg-black px-8 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111] active:scale-95"
+                  className="relative h-[38px] overflow-hidden rounded-[2px] bg-black px-8 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111] active:scale-95"
                 >
                   <span className="absolute inset-x-0 top-0 h-px bg-white/20" />
                   <span className="relative z-10">Create Profile</span>
