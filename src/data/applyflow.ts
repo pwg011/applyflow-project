@@ -1,4 +1,4 @@
-export type ApplyFlowNavKey = "dashboard" | "jobs" | "profiles";
+export type ApplyFlowNavKey = "dashboard" | "jobs" | "profiles" | "resume";
 export type JobStatus = "Interview" | "Applied" | "Draft" | "Saved" | "Active";
 export type StatusTone = "blue" | "slate" | "amber" | "gray";
 export type ProfileIconName = "design" | "code" | "growth";
@@ -47,6 +47,7 @@ export const sidebarNavItems: Array<{
   { key: "dashboard", label: "Dashboard", href: "#" },
   { key: "jobs", label: "Jobs", href: "/" },
   { key: "profiles", label: "Profiles", href: "/personas" },
+  { key: "resume", label: "Resume Builder", href: "/resume-builder" },
 ];
 
 export const stats = [

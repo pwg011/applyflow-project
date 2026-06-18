@@ -31,6 +31,15 @@ function ProfileIcon() {
   );
 }
 
+function DocumentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M6 3h8l4 4v14H6z" />
+      <path d="M14 3v5h4M9 12h6M9 16h6" />
+    </svg>
+  );
+}
+
 function HelpIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -45,6 +54,7 @@ const navIcons: Record<ApplyFlowNavKey, ReactNode> = {
   dashboard: <GridIcon />,
   jobs: <BriefcaseIcon />,
   profiles: <ProfileIcon />,
+  resume: <DocumentIcon />,
 };
 
 export default function AppSidebar({
