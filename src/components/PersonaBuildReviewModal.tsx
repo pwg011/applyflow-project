@@ -1,478 +1,236 @@
 "use client";
 
-import type { ChangeEvent, FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import type { Persona } from "@/types/persona";
-
-type PersonaBuildReviewFormData = {
-  display_name: string;
-  email: string;
-  phone: string;
-  professional_title: string;
-  target_role: string;
-  skills: string;
-  experience_summary: string;
-};
+import StatusBadge from "@/components/applyflow/StatusBadge";
+import type { ApplyFlowProfile } from "@/data/applyflow";
 
 type PersonaBuildReviewModalProps = {
-  persona: Persona | null;
-  formData: PersonaBuildReviewFormData;
-  isSaving: boolean;
-  isAnalyzing: boolean;
-  errorMessage: string;
-  autoBuildOnOpen?: boolean;
+  profile: ApplyFlowProfile | null;
   onClose: () => void;
-  onChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  onBuildWithAi: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onBack: () => void;
+  onSave: () => void;
 };
 
-type FieldProps = {
-  label: string;
-  name: keyof PersonaBuildReviewFormData;
-  value: string;
-  onChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  multiline?: boolean;
+const reviewContent = {
+  design: {
+    suggestedTitle: "Senior Product Designer",
+    summary:
+      "CV signals strong product design ownership across fintech and SaaS workflows, with evidence of research-led delivery and design system contribution.",
+    strengths: ["Product strategy", "UX research", "Design systems"],
+    highlights: [
+      "Led cross-functional product discovery for complex dashboard workflows.",
+      "Built reusable interface patterns that improved delivery consistency.",
+      "Partnered with engineering and product teams on measurable UX outcomes.",
+    ],
+    missing: ["Portfolio metrics", "Leadership scope", "Accessibility details"],
+    improvements: [
+      "Add quantified impact for each flagship case study.",
+      "Clarify team size, decision ownership, and shipped outcomes.",
+    ],
+  },
+  code: {
+    suggestedTitle: "Frontend Lead",
+    summary:
+      "CV reads as a senior frontend profile with strong React delivery, architecture awareness, and practical mentoring signals.",
+    strengths: ["React architecture", "TypeScript", "Technical leadership"],
+    highlights: [
+      "Owned reusable UI architecture across production product surfaces.",
+      "Improved component reliability and delivery speed through shared patterns.",
+      "Supported engineers through reviews, pairing, and technical direction.",
+    ],
+    missing: ["Performance metrics", "System ownership", "Release impact"],
+    improvements: [
+      "Show before-and-after engineering outcomes for architecture work.",
+      "Name the scope of systems, users, or teams influenced.",
+    ],
+  },
+  growth: {
+    suggestedTitle: "Growth Lead",
+    summary:
+      "CV suggests a metrics-oriented growth profile with experience across acquisition, retention, and experiment-driven product iteration.",
+    strengths: ["Experimentation", "Lifecycle strategy", "Retention analysis"],
+    highlights: [
+      "Mapped funnel issues into practical growth experiments.",
+      "Translated user behavior data into lifecycle improvements.",
+      "Balanced acquisition motion with activation and retention signals.",
+    ],
+    missing: ["Experiment volume", "Revenue impact", "Channel mix"],
+    improvements: [
+      "Add concrete lift percentages for key experiments.",
+      "Separate acquisition, activation, and retention achievements.",
+    ],
+  },
 };
-
-type PersonaCvAnalysisResponse = PersonaBuildReviewFormData;
-
-type NeedsClientOcrResponse = {
-  needsClientOcr: true;
-  reason: string;
-};
-
-const personaCvBucketName = "persona-cvs";
-const unclearCvMessage =
-  "This CV could not be read clearly. Please upload a clearer PDF or DOCX file.";
-
-function isPdfPersonaCv(persona: Persona) {
-  return Boolean(
-    persona.cv_file_path?.toLowerCase().endsWith(".pdf") ||
-      persona.cv_file_name?.toLowerCase().endsWith(".pdf"),
-  );
-}
-
-function isPersonaCvAnalysisResponse(
-  value: unknown,
-): value is PersonaCvAnalysisResponse {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    typeof candidate.display_name === "string" &&
-    typeof candidate.email === "string" &&
-    typeof candidate.phone === "string" &&
-    typeof candidate.professional_title === "string" &&
-    typeof candidate.target_role === "string" &&
-    typeof candidate.skills === "string" &&
-    typeof candidate.experience_summary === "string"
-  );
-}
-
-function isNeedsClientOcrResponse(value: unknown): value is NeedsClientOcrResponse {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    candidate.needsClientOcr === true && typeof candidate.reason === "string"
-  );
-}
-
-function getApiErrorMessage(value: unknown, fallback: string) {
-  if (!value || typeof value !== "object") {
-    return fallback;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return typeof candidate.error === "string" ? candidate.error : fallback;
-}
-
-function Field({
-  label,
-  name,
-  value,
-  onChange,
-  multiline = false,
-}: FieldProps) {
-  return (
-    <label className="space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      {multiline ? (
-        <textarea
-          name={name}
-          value={value}
-          onChange={onChange}
-          rows={4}
-          className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-        />
-      ) : (
-        <input
-          type="text"
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-        />
-      )}
-    </label>
-  );
-}
 
 export default function PersonaBuildReviewModal({
-  persona,
-  formData,
-  isSaving,
-  isAnalyzing,
-  errorMessage,
-  autoBuildOnOpen = false,
+  profile,
   onClose,
-  onChange,
-  onBuildWithAi,
-  onSubmit,
+  onBack,
+  onSave,
 }: PersonaBuildReviewModalProps) {
-  const [localIsAnalyzing, setLocalIsAnalyzing] = useState(false);
-  const [localMessage, setLocalMessage] = useState("");
-  const [localError, setLocalError] = useState("");
-  const autoBuildStartedForPersonaRef = useRef<string | null>(null);
-  const handleBuildWithAiClickRef = useRef<() => Promise<void>>(async () => {});
-  const isBusy = isAnalyzing || localIsAnalyzing;
-
-  function applyAnalysisFields(result: PersonaCvAnalysisResponse) {
-    (Object.entries(result) as Array<
-      [keyof PersonaBuildReviewFormData, string]
-    >).forEach(([name, value]) => {
-      onChange({
-        target: {
-          name,
-          value,
-        },
-      } as ChangeEvent<HTMLInputElement>);
-    });
-  }
-
-  async function analyzeCv(
-    personaId: string,
-    token: string,
-    payload: { cv_file_path?: string; cv_text?: string },
-  ) {
-    const response = await fetch("/api/analyze-cv", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        persona_id: personaId,
-        ...payload,
-      }),
-    });
-    const responseBody = (await response.json()) as unknown;
-
-    if (!response.ok) {
-      throw new Error(getApiErrorMessage(responseBody, "Could not analyze this CV."));
-    }
-
-    return responseBody;
-  }
-
-  async function handleBuildWithAiClick() {
-    setLocalError("");
-    setLocalMessage("");
-
-    if (!persona || !isPdfPersonaCv(persona)) {
-      setLocalMessage("Building persona with AI...");
-      onBuildWithAi();
-      return;
-    }
-
-    if (!persona.cv_file_path) {
-      setLocalError("No CV is attached to this persona.");
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.access_token) {
-      setLocalError("You must be logged in to analyze this CV.");
-      return;
-    }
-
-    setLocalIsAnalyzing(true);
-    setLocalMessage("Building persona with AI...");
-
-    try {
-      console.info("[browser-ocr] build-with-ai clicked", {
-        isPdf: true,
-        hasCvFilePath: Boolean(persona.cv_file_path),
-      });
-
-      const firstResponse = await analyzeCv(persona.id, session.access_token, {
-        cv_file_path: persona.cv_file_path,
-      });
-
-      if (isPersonaCvAnalysisResponse(firstResponse)) {
-        applyAnalysisFields(firstResponse);
-        setLocalMessage("CV analysis completed. Review the fields before saving.");
-        return;
-      }
-
-      if (!isNeedsClientOcrResponse(firstResponse)) {
-        throw new Error("The CV analysis response was incomplete.");
-      }
-
-      console.info("[browser-ocr] needsClientOcr received", {
-        hasCvFilePath: Boolean(persona.cv_file_path),
-        hasReason: Boolean(firstResponse.reason),
-      });
-
-      setLocalMessage("Scanning PDF in browser...");
-
-      const { data: blob, error: downloadError } = await supabase.storage
-        .from(personaCvBucketName)
-        .download(persona.cv_file_path);
-
-      console.info("[browser-ocr] storage download completed", {
-        success: Boolean(blob && !downloadError),
-        hasError: Boolean(downloadError),
-        blobSize: blob?.size ?? 0,
-        blobType: blob?.type || "unknown",
-      });
-
-      if (downloadError || !blob) {
-        throw new Error(downloadError?.message || "Could not download the CV file.");
-      }
-
-      const { ocrPdfBlobInBrowser } = await import("@/utils/clientPdfOcr");
-      console.info("[browser-ocr] OCR starting", {
-        blobSize: blob.size,
-        blobType: blob.type || "unknown",
-        maxPages: 3,
-        scale: 2.5,
-      });
-      const ocrText = (
-        await ocrPdfBlobInBrowser(blob, {
-          maxPages: 3,
-          scale: 2.5,
-          onProgress: setLocalMessage,
-        })
-      ).trim();
-
-      console.info("[browser-ocr] OCR completed", {
-        textLength: ocrText.length,
-      });
-
-      if (ocrText.length < 120) {
-        throw new Error(unclearCvMessage);
-      }
-
-      setLocalMessage("Building persona with scanned text...");
-      console.info("[browser-ocr] retrying analyze-cv with OCR text", {
-        textLength: ocrText.length,
-      });
-
-      const retryResponse = await analyzeCv(persona.id, session.access_token, {
-        cv_text: ocrText,
-      });
-
-      if (!isPersonaCvAnalysisResponse(retryResponse)) {
-        throw new Error("The CV analysis response was incomplete.");
-      }
-
-      applyAnalysisFields(retryResponse);
-      setLocalMessage("CV analysis completed. Review the fields before saving.");
-    } catch (error) {
-      setLocalError(
-        error instanceof Error ? error.message : "Could not analyze this CV.",
-      );
-      setLocalMessage("");
-    } finally {
-      setLocalIsAnalyzing(false);
-    }
-  }
-
-  useEffect(() => {
-    handleBuildWithAiClickRef.current = handleBuildWithAiClick;
-  });
-
-  useEffect(() => {
-    if (!autoBuildOnOpen || !persona) {
-      autoBuildStartedForPersonaRef.current = null;
-      return;
-    }
-
-    if (autoBuildStartedForPersonaRef.current === persona.id) {
-      return;
-    }
-
-    autoBuildStartedForPersonaRef.current = persona.id;
-    void handleBuildWithAiClickRef.current();
-  }, [autoBuildOnOpen, persona]);
+  const content = profile ? reviewContent[profile.icon] : null;
 
   return (
     <div
-      className={`fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/40 px-6 backdrop-blur-sm transition-all duration-300 ${
-        persona
+      className={`fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/12 px-4 py-5 backdrop-blur-[12px] transition-opacity duration-300 sm:px-6 ${
+        profile
           ? "pointer-events-auto opacity-100"
           : "pointer-events-none opacity-0"
       }`}
       onClick={onClose}
-      aria-hidden={!persona}
+      aria-hidden={!profile}
     >
-      <div
-        className={`flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
-          persona ? "translate-y-0 scale-100" : "translate-y-4 scale-95"
+      <section
+        className={`relative flex max-h-[90vh] w-full max-w-[920px] flex-col overflow-hidden rounded-[8px] border border-white/65 bg-gradient-to-br from-white/78 via-white/62 to-slate-100/48 shadow-[0_34px_80px_rgba(15,23,42,0.22),0_1px_0_rgba(255,255,255,0.85)_inset] ring-1 ring-slate-900/5 backdrop-blur-[64px] backdrop-saturate-150 transition-transform duration-300 ${
+          profile ? "translate-y-0 scale-100" : "translate-y-3 scale-95"
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        {persona ? (
+        {profile && content ? (
           <>
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
-              <div>
-                <p className="text-sm text-slate-500">
-                  {persona.build_status === "cv_draft"
-                    ? "Draft persona"
-                    : "Persona review"}
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  {persona.build_status === "cv_draft"
-                    ? "Build Persona from CV"
-                    : "Rebuild Persona from CV"}
-                </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-[4px] border border-white/70 bg-white/55 text-[23px] font-light leading-none text-[#4b4b4d] shadow-[0_10px_22px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl transition hover:bg-white/75 hover:text-black"
+              aria-label="Close profile review"
+            >
+              &times;
+            </button>
+
+            <header className="border-t border-white/90 bg-white/24 px-6 pb-5 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] sm:px-8">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#4b4b4d]">
+                CV / Profile Review
+              </p>
+              <div className="mt-4 flex flex-col gap-4 pr-12 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] text-black">
+                    {profile.title}
+                  </h2>
+                  <p className="mt-2 max-w-[600px] text-[15px] leading-6 text-[#4b4b4d]">
+                    Review the generated profile direction before saving.
+                  </p>
+                </div>
+                <StatusBadge
+                  status={profile.status}
+                  tone={profile.statusTone}
+                  variant="tag"
+                />
+              </div>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [scrollbar-color:#c7c9cc_transparent] [scrollbar-width:thin] sm:px-8">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Analyzed CV Summary
+                  </p>
+                  <p className="mt-3 text-[15px] leading-6 text-[#273142]">
+                    {content.summary}
+                  </p>
+                </section>
+
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Suggested Title
+                  </p>
+                  <p className="mt-3 text-[22px] font-semibold leading-tight tracking-[-0.035em] text-black">
+                    {content.suggestedTitle}
+                  </p>
+                </section>
               </div>
 
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close modal"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-              >
-                X
-              </button>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Strengths
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {content.strengths.map((strength) => (
+                      <span
+                        key={strength}
+                        className="rounded-[3px] border border-white/70 bg-white/50 px-3 py-1.5 text-[11px] font-semibold text-[#3d4655] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
+                      >
+                        {strength}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Missing Sections
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {content.missing.map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-[3px] border border-[#d7dbe0] bg-white/36 px-3 py-1.5 text-[11px] font-semibold text-[#596273] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Experience Highlights
+                  </p>
+                  <div className="relative mt-5 space-y-4 pl-7">
+                    <div className="absolute bottom-2 left-[4px] top-2 w-px bg-[#d7dbe0]" />
+                    {content.highlights.map((highlight, index) => (
+                      <div key={highlight} className="relative">
+                        <span
+                          className={`absolute -left-[28px] top-1.5 flex h-3 w-3 rounded-full border-2 border-white shadow-sm ${
+                            index === 0 ? "bg-black" : "bg-[#c7c9cc]"
+                          }`}
+                        />
+                        <p className="text-[14px] leading-5 text-[#273142]">
+                          {highlight}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-[5px] border border-white/70 bg-white/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
+                    Profile Improvements
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {content.improvements.map((improvement) => (
+                      <div
+                        key={improvement}
+                        className="border border-white/70 bg-white/44 px-4 py-3 text-[14px] leading-5 text-[#273142] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
+                      >
+                        {improvement}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
             </div>
 
-            <form
-              onSubmit={onSubmit}
-              className="flex min-h-0 flex-1 flex-col overflow-hidden"
-            >
-              <div className="space-y-6 overflow-y-auto px-6 py-5 pr-4">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    CV
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-slate-900">
-                    {persona.cv_file_name || "CV attached"}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    This CV is ready to be analyzed and used to build a
-                    persona.
-                  </p>
-                </div>
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Field
-                    label="Display name"
-                    name="display_name"
-                    value={formData.display_name}
-                    onChange={onChange}
-                  />
-                  <Field
-                    label="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={onChange}
-                  />
-                  <Field
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={onChange}
-                  />
-                  <Field
-                    label="Professional title"
-                    name="professional_title"
-                    value={formData.professional_title}
-                    onChange={onChange}
-                  />
-                  <Field
-                    label="Target role"
-                    name="target_role"
-                    value={formData.target_role}
-                    onChange={onChange}
-                  />
-                </div>
-
-                <Field
-                  label="Skills"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={onChange}
-                  multiline
-                />
-                <Field
-                  label="Experience summary"
-                  name="experience_summary"
-                  value={formData.experience_summary}
-                  onChange={onChange}
-                  multiline
-                />
-
-                {localMessage ? (
-                  <p className="text-sm text-slate-600">{localMessage}</p>
-                ) : null}
-
-                {localError || errorMessage ? (
-                  <p className="text-sm text-red-600">
-                    {localError || errorMessage}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-between">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-                >
-                  Cancel
-                </button>
-
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => void handleBuildWithAiClick()}
-                    disabled={isBusy}
-                    className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    {isBusy ? "Analyzing CV..." : "Build with AI"}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isSaving ? "Saving..." : "Save Persona"}
-                  </button>
-                </div>
-              </div>
-            </form>
+            <footer className="grid shrink-0 grid-cols-2 gap-4 border-t border-white/65 bg-white/58 px-6 py-4 shadow-[0_-16px_32px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl sm:flex sm:justify-end sm:px-8">
+              <button
+                type="button"
+                onClick={onBack}
+                className="h-11 border border-white/75 bg-white/45 px-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#222426] shadow-[0_8px_18px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] transition hover:bg-white/70 sm:min-w-[132px]"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={onSave}
+                className="h-11 rounded-[2px] bg-black px-8 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111] sm:min-w-[172px]"
+              >
+                Save Profile
+              </button>
+            </footer>
           </>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 }

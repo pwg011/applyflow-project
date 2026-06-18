@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import ApplyShell from "@/components/applyflow/ApplyShell";
 import PageHeader from "@/components/applyflow/PageHeader";
+import PersonaBuildReviewModal from "@/components/PersonaBuildReviewModal";
+import PersonaDetailsModal from "@/components/PersonaDetailsModal";
 import NewTemplateCard from "@/components/profiles/NewTemplateCard";
 import ProfileCard from "@/components/profiles/ProfileCard";
-import { profiles } from "@/data/applyflow";
+import { profiles, type ApplyFlowProfile } from "@/data/applyflow";
 
 const profileTemplates = [
   {
@@ -45,6 +47,10 @@ export default function ProfilesPage() {
   const [selectedTemplateTitle, setSelectedTemplateTitle] = useState(
     profileTemplates[0].title,
   );
+  const [selectedDetailsProfile, setSelectedDetailsProfile] =
+    useState<ApplyFlowProfile | null>(null);
+  const [selectedReviewProfile, setSelectedReviewProfile] =
+    useState<ApplyFlowProfile | null>(null);
   const [activeProfileTitle, setActiveProfileTitle] = useState<string | null>(
     null,
   );
@@ -71,6 +77,26 @@ export default function ProfilesPage() {
   function openProfile(profileTitle: string) {
     setActiveProfileTitle(profileTitle);
     setIsCreateOpen(true);
+  }
+
+  function openProfileDetails(profile: ApplyFlowProfile) {
+    setSelectedDetailsProfile(profile);
+  }
+
+  function editProfile(profile: ApplyFlowProfile) {
+    setSelectedDetailsProfile(null);
+    setSelectedReviewProfile(null);
+    openProfile(profile.title);
+  }
+
+  function openBuildReview(profile: ApplyFlowProfile) {
+    setSelectedDetailsProfile(null);
+    setSelectedReviewProfile(profile);
+  }
+
+  function backToDetailsFromReview() {
+    setSelectedDetailsProfile(selectedReviewProfile);
+    setSelectedReviewProfile(null);
   }
 
   function openTemplateSelection() {
@@ -109,8 +135,8 @@ export default function ProfilesPage() {
               <ProfileCard
                 key={profile.id}
                 profile={profile}
-                onView={() => openProfile(profile.title)}
-                onEdit={() => openProfile(profile.title)}
+                onView={() => openProfileDetails(profile)}
+                onEdit={() => editProfile(profile)}
               />
             ))}
 
@@ -127,6 +153,20 @@ export default function ProfilesPage() {
           </div>
         </footer>
       </div>
+
+      <PersonaDetailsModal
+        profile={selectedDetailsProfile}
+        onClose={() => setSelectedDetailsProfile(null)}
+        onEdit={editProfile}
+        onReview={openBuildReview}
+      />
+
+      <PersonaBuildReviewModal
+        profile={selectedReviewProfile}
+        onClose={() => setSelectedReviewProfile(null)}
+        onBack={backToDetailsFromReview}
+        onSave={() => setSelectedReviewProfile(null)}
+      />
 
       {isTemplateOpen ? (
         <div
