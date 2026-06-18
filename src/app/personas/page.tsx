@@ -40,8 +40,48 @@ const profileTemplates = [
   },
 ];
 
+function ProfilesEmptyState({
+  onCreate,
+  onTemplate,
+}: {
+  onCreate: () => void;
+  onTemplate: () => void;
+}) {
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-[#cfd2d6] bg-white/35 px-6 py-10 text-center shadow-[0_12px_26px_rgba(0,0,0,0.025),inset_0_1px_0_rgba(255,255,255,0.68)] xl:col-span-4">
+      <span className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-[#d7d9dc] bg-[#eef0f3]/80 text-[24px] font-light text-[#2b2d30] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_16px_rgba(0,0,0,0.04)]">
+        +
+      </span>
+      <h3 className="mt-4 text-[18px] font-semibold tracking-[-0.025em] text-black">
+        No profiles yet
+      </h3>
+      <p className="mt-2 max-w-[400px] text-[14px] leading-6 text-[#4b4b4d]">
+        Create a reusable professional profile or start from a structured
+        template baseline.
+      </p>
+      <div className="mt-5 grid w-full max-w-[360px] grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={onTemplate}
+          className="h-10 border border-white/75 bg-white/45 px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#222426] shadow-[0_8px_18px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] transition hover:bg-white/70"
+        >
+          New Template
+        </button>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="h-10 rounded-[2px] bg-black px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111]"
+        >
+          Create Profile
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilesPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showEmptyProfiles, setShowEmptyProfiles] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   const [selectedTemplateTitle, setSelectedTemplateTitle] = useState(
@@ -56,6 +96,10 @@ export default function ProfilesPage() {
   );
 
   const filteredProfiles = useMemo(() => {
+    if (showEmptyProfiles) {
+      return [];
+    }
+
     const query = searchQuery.trim().toLowerCase();
 
     if (!query) {
@@ -67,7 +111,7 @@ export default function ProfilesPage() {
         profile.title.toLowerCase().includes(query) ||
         profile.description.toLowerCase().includes(query),
     );
-  }, [searchQuery]);
+  }, [searchQuery, showEmptyProfiles]);
 
   function openCreateProfile() {
     setActiveProfileTitle(null);
@@ -130,17 +174,51 @@ export default function ProfilesPage() {
             onActionClick={openCreateProfile}
           />
 
-          <div className="mt-8 grid w-full grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-4">
-            {filteredProfiles.map((profile) => (
-              <ProfileCard
-                key={profile.id}
-                profile={profile}
-                onView={() => openProfileDetails(profile)}
-                onEdit={() => editProfile(profile)}
-              />
-            ))}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowEmptyProfiles(false)}
+              className={`h-9 border px-4 text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
+                !showEmptyProfiles
+                  ? "border-black bg-black text-white"
+                  : "border-white/70 bg-white/40 text-[#222426] hover:bg-white/65"
+              }`}
+            >
+              Default
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowEmptyProfiles(true)}
+              className={`h-9 border px-4 text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
+                showEmptyProfiles
+                  ? "border-black bg-black text-white"
+                  : "border-white/70 bg-white/40 text-[#222426] hover:bg-white/65"
+              }`}
+            >
+              No Profiles
+            </button>
+          </div>
 
-            <NewTemplateCard onClick={openTemplateSelection} />
+          <div className="mt-8 grid w-full grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-4">
+            {filteredProfiles.length > 0 ? (
+              <>
+                {filteredProfiles.map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    onView={() => openProfileDetails(profile)}
+                    onEdit={() => editProfile(profile)}
+                  />
+                ))}
+
+                <NewTemplateCard onClick={openTemplateSelection} />
+              </>
+            ) : (
+              <ProfilesEmptyState
+                onCreate={openCreateProfile}
+                onTemplate={openTemplateSelection}
+              />
+            )}
           </div>
         </section>
 

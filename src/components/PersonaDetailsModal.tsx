@@ -110,9 +110,20 @@ export default function PersonaDetailsModal({
                   <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
                     CV Status
                   </p>
-                  <p className="mt-3 text-[13px] font-semibold text-[#273142]">
-                    {profile.footerNote}
-                  </p>
+                  {profile.footerNote.toLowerCase().includes("upload") ? (
+                    <div className="mt-3 border border-dashed border-[#cfd2d6] bg-white/34 px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.68)]">
+                      <p className="text-[13px] font-semibold text-black">
+                        No CV uploaded
+                      </p>
+                      <p className="mt-1 text-[11px] leading-4 text-[#596273]">
+                        Add a CV later to unlock review notes.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-[13px] font-semibold text-[#273142]">
+                      {profile.footerNote}
+                    </p>
+                  )}
                 </section>
               </div>
 

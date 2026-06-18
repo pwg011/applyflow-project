@@ -27,9 +27,48 @@ const demoImportedJob: ImportPreviewModalData = {
     "As Senior Design Lead, you will guide the visual evolution of aerospace interface systems, partner with engineering teams, mentor designers, and shape a design system that balances technical complexity with intuitive product quality. Requirements include 8+ years in UI/UX, strong systems thinking, and senior-level Figma experience.",
 };
 
+type JobsEmptyDemo = "default" | "noJobs" | "noSelection";
+
+function EmptyStatePanel({
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-dashed border-[#cfd2d6] bg-white/35 px-6 py-10 text-center shadow-[0_12px_26px_rgba(0,0,0,0.025),inset_0_1px_0_rgba(255,255,255,0.68)]">
+      <span className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-[#d7d9dc] bg-[#eef0f3]/80 text-[20px] font-semibold text-[#2b2d30] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_16px_rgba(0,0,0,0.04)]">
+        +
+      </span>
+      <h3 className="mt-4 text-[18px] font-semibold tracking-[-0.025em] text-black">
+        {title}
+      </h3>
+      <p className="mt-2 max-w-[360px] text-[14px] leading-6 text-[#4b4b4d]">
+        {description}
+      </p>
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-5 h-10 rounded-[2px] bg-black px-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition hover:bg-[#111827]"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedJobId, setSelectedJobId] = useState("northstar-labs");
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobsEmptyDemo, setJobsEmptyDemo] =
+    useState<JobsEmptyDemo>("default");
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
   const [isEditApplicationOpen, setIsEditApplicationOpen] = useState(false);
@@ -40,8 +79,14 @@ export default function Home() {
     useState<ImportPreviewModalData>(demoImportedJob);
 
   const selectedJob =
-    jobs.find((job) => job.id === selectedJobId) ?? jobs[0];
+    jobsEmptyDemo === "noSelection" || jobsEmptyDemo === "noJobs"
+      ? null
+      : (jobs.find((job) => job.id === selectedJobId) ?? jobs[0]);
   const filteredJobs = useMemo(() => {
+    if (jobsEmptyDemo === "noJobs") {
+      return [];
+    }
+
     const query = searchQuery.trim().toLowerCase();
 
     if (!query) {
@@ -53,7 +98,7 @@ export default function Home() {
         job.company.toLowerCase().includes(query) ||
         job.role.toLowerCase().includes(query),
     );
-  }, [searchQuery]);
+  }, [jobsEmptyDemo, searchQuery]);
 
   function handleImportJob() {
     setImportPreviewData(demoImportedJob);
@@ -68,6 +113,14 @@ export default function Home() {
 
   function handleSaveImportedJob() {
     setIsImportPreviewOpen(false);
+  }
+
+  function openNoAnalysisPreview() {
+    setImportPreviewData({
+      ...demoImportedJob,
+      summary: "",
+    });
+    setIsImportPreviewOpen(true);
   }
 
   return (
@@ -90,6 +143,34 @@ export default function Home() {
             onActionClick={() => setIsImportOpen(true)}
           />
 
+          <div className="mt-6 flex flex-wrap gap-3">
+            {[
+              ["default", "Default"],
+              ["noJobs", "No Jobs"],
+              ["noSelection", "No Selection"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setJobsEmptyDemo(value as JobsEmptyDemo)}
+                className={`h-9 border px-4 text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
+                  jobsEmptyDemo === value
+                    ? "border-black bg-black text-white"
+                    : "border-white/70 bg-white/40 text-[#222426] hover:bg-white/65"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={openNoAnalysisPreview}
+              className="h-9 border border-white/70 bg-white/40 px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#222426] transition hover:bg-white/65"
+            >
+              No Analysis
+            </button>
+          </div>
+
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
             {stats.map((stat) => (
               <StatCard key={stat.label} label={stat.label} value={stat.value} />
@@ -98,22 +179,41 @@ export default function Home() {
 
           <div className="mt-8 grid items-start gap-5 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(300px,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(340px,26rem)] 2xl:gap-7">
             <div className="space-y-4">
-              {filteredJobs.map((job) => (
-                <JobRow
-                  key={job.id}
-                  job={job}
-                  selected={job.id === selectedJob.id}
-                  onSelect={() => setSelectedJobId(job.id)}
+              {filteredJobs.length > 0 ? (
+                filteredJobs.map((job) => (
+                  <JobRow
+                    key={job.id}
+                    job={job}
+                    selected={job.id === selectedJob?.id}
+                    onSelect={() => {
+                      setJobsEmptyDemo("default");
+                      setSelectedJobId(job.id);
+                    }}
+                  />
+                ))
+              ) : (
+                <EmptyStatePanel
+                  title="No jobs yet"
+                  description="Import a job to start tracking applications, notes, and next steps in one place."
+                  actionLabel="Import Job"
+                  onAction={() => setIsImportOpen(true)}
                 />
-              ))}
+              )}
             </div>
 
-            <SelectedJobPanel
-              job={selectedJob}
-              onEditDetails={() => setIsEditApplicationOpen(true)}
-              onDeleteApplication={() => setIsDeleteApplicationOpen(true)}
-              onViewJob={() => setIsApplicationDetailsOpen(true)}
-            />
+            {selectedJob ? (
+              <SelectedJobPanel
+                job={selectedJob}
+                onEditDetails={() => setIsEditApplicationOpen(true)}
+                onDeleteApplication={() => setIsDeleteApplicationOpen(true)}
+                onViewJob={() => setIsApplicationDetailsOpen(true)}
+              />
+            ) : (
+              <EmptyStatePanel
+                title="No selected jobs"
+                description="Choose a job from the list to preview the application log, notes, and next step details."
+              />
+            )}
           </div>
         </section>
 
@@ -218,25 +318,31 @@ export default function Home() {
         isSaving={false}
       />
 
-      <ApplicationForm
-        isOpen={isEditApplicationOpen}
-        job={selectedJob}
-        onClose={() => setIsEditApplicationOpen(false)}
-      />
+      {selectedJob ? (
+        <ApplicationForm
+          isOpen={isEditApplicationOpen}
+          job={selectedJob}
+          onClose={() => setIsEditApplicationOpen(false)}
+        />
+      ) : null}
 
-      <ApplicationDetailsModal
-        isOpen={isApplicationDetailsOpen}
-        job={selectedJob}
-        onClose={() => setIsApplicationDetailsOpen(false)}
-      />
+      {selectedJob ? (
+        <ApplicationDetailsModal
+          isOpen={isApplicationDetailsOpen}
+          job={selectedJob}
+          onClose={() => setIsApplicationDetailsOpen(false)}
+        />
+      ) : null}
 
-      <DeleteApplicationModal
-        isOpen={isDeleteApplicationOpen}
-        job={selectedJob}
-        isDeleting={false}
-        onCancel={() => setIsDeleteApplicationOpen(false)}
-        onConfirmDelete={() => setIsDeleteApplicationOpen(false)}
-      />
+      {selectedJob ? (
+        <DeleteApplicationModal
+          isOpen={isDeleteApplicationOpen}
+          job={selectedJob}
+          isDeleting={false}
+          onCancel={() => setIsDeleteApplicationOpen(false)}
+          onConfirmDelete={() => setIsDeleteApplicationOpen(false)}
+        />
+      ) : null}
     </ApplyShell>
   );
 }

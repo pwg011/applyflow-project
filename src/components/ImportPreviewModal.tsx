@@ -253,12 +253,24 @@ export default function ImportPreviewModal({
                   Editable
                 </span>
               </div>
-              <textarea
-                name="summary"
-                value={data.summary}
-                onChange={handleInputChange}
-                className="min-h-[112px] w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-6 text-[#273142] outline-none placeholder:text-[#8f98a6] focus:ring-0"
-              />
+              {data.summary.trim() ? (
+                <textarea
+                  name="summary"
+                  value={data.summary}
+                  onChange={handleInputChange}
+                  className="min-h-[112px] w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-6 text-[#273142] outline-none placeholder:text-[#8f98a6] focus:ring-0"
+                />
+              ) : (
+                <div className="flex min-h-[112px] flex-col justify-center border border-dashed border-[#cfd2d6] bg-white/30 px-4 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.68)]">
+                  <p className="text-[14px] font-semibold text-black">
+                    No job analysis yet
+                  </p>
+                  <p className="mx-auto mt-2 max-w-[420px] text-[13px] leading-5 text-[#596273]">
+                    Add a job description to generate a summary, requirements,
+                    and match notes.
+                  </p>
+                </div>
+              )}
             </section>
 
             <section className="mt-3 pb-1">
