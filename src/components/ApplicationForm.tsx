@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { ApplyFlowJob } from "@/data/applyflow";
 
 type ApplicationFormProps = {
@@ -13,10 +14,26 @@ export default function ApplicationForm({
   job,
   onClose,
 }: ApplicationFormProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
   const notes =
     job.applicationLog.length > 0
       ? `${job.note} Latest activity: ${job.applicationLog[0].title}.`
       : job.note;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    bodyRef.current?.scrollTo({ top: 0 });
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, job.id]);
 
   return (
     <>
@@ -31,7 +48,7 @@ export default function ApplicationForm({
       />
 
       <aside
-        className={`fixed right-0 top-0 z-[59] flex h-full w-full max-w-[460px] flex-col border-l border-slate-300/45 bg-gradient-to-br from-white/80 via-white/64 to-slate-100/50 shadow-[-24px_0_68px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.82)] ring-1 ring-white/70 backdrop-blur-[56px] backdrop-saturate-150 transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-0 z-[59] flex h-screen w-full max-w-[460px] flex-col overflow-hidden border-l border-slate-300/45 bg-gradient-to-br from-white/80 via-white/64 to-slate-100/50 shadow-[-24px_0_68px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.82)] ring-1 ring-white/70 backdrop-blur-[56px] backdrop-saturate-150 transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!isOpen}
@@ -59,7 +76,10 @@ export default function ApplicationForm({
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-5 [scrollbar-color:#d5d8de_transparent] [scrollbar-width:thin]">
+        <div
+          ref={bodyRef}
+          className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-7 pb-24 pt-5 [scroll-padding-bottom:144px] [scroll-padding-top:24px] [scrollbar-color:#d5d8de_transparent] [scrollbar-width:thin]"
+        >
           <section className="rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
             <div className="flex items-center gap-4">
               <span
@@ -78,7 +98,7 @@ export default function ApplicationForm({
             </div>
           </section>
 
-          <form className="mt-4 space-y-4">
+          <form className="mt-4 space-y-4 pb-10">
             <label className="block">
               <span className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
                 Company

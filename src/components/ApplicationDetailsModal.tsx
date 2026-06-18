@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import StatusBadge from "@/components/applyflow/StatusBadge";
 import type { ApplyFlowJob } from "@/data/applyflow";
 
@@ -18,8 +19,24 @@ export default function ApplicationDetailsModal({
   job,
   onClose,
 }: ApplicationDetailsModalProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
   const role = job.level ? `${job.role} - ${job.level}` : job.role;
   const jobLink = formatJobLink(job.company);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    bodyRef.current?.scrollTo({ top: 0 });
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, job.id]);
 
   return (
     <>
@@ -34,7 +51,7 @@ export default function ApplicationDetailsModal({
       />
 
       <aside
-        className={`fixed right-0 top-0 z-[63] flex h-full w-full max-w-[540px] flex-col border-l border-slate-300/45 bg-gradient-to-br from-white/80 via-white/64 to-slate-100/50 shadow-[-24px_0_68px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.82)] ring-1 ring-white/70 backdrop-blur-[56px] backdrop-saturate-150 transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-0 z-[63] flex h-screen w-full max-w-[540px] flex-col overflow-hidden border-l border-slate-300/45 bg-gradient-to-br from-white/80 via-white/64 to-slate-100/50 shadow-[-24px_0_68px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.82)] ring-1 ring-white/70 backdrop-blur-[56px] backdrop-saturate-150 transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!isOpen}
@@ -71,7 +88,10 @@ export default function ApplicationDetailsModal({
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6 [scrollbar-color:#d5d8de_transparent] [scrollbar-width:thin]">
+        <div
+          ref={bodyRef}
+          className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-7 pb-24 pt-6 [scroll-padding-bottom:144px] [scroll-padding-top:24px] [scrollbar-color:#d5d8de_transparent] [scrollbar-width:thin]"
+        >
           <section className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-[5px] border border-white/70 bg-white/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
@@ -145,7 +165,7 @@ export default function ApplicationDetailsModal({
             </div>
           </section>
 
-          <section className="mt-4 pb-2">
+          <section className="mt-4 pb-12">
             <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#4b4b4d]">
               Application Log
             </p>
