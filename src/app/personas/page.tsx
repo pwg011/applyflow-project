@@ -7,9 +7,44 @@ import NewTemplateCard from "@/components/profiles/NewTemplateCard";
 import ProfileCard from "@/components/profiles/ProfileCard";
 import { profiles } from "@/data/applyflow";
 
+const profileTemplates = [
+  {
+    title: "Product Designer",
+    subtitle: "Portfolio-forward profile for product and UX roles",
+    initials: "PD",
+    details: ["Case studies", "Design systems", "Research"],
+    prompts: "9 guided portfolio and impact prompts",
+  },
+  {
+    title: "Frontend Lead",
+    subtitle: "Technical leadership profile for UI engineering roles",
+    initials: "FL",
+    details: ["React", "Architecture", "Mentorship"],
+    prompts: "10 engineering scope and leadership prompts",
+  },
+  {
+    title: "Growth Lead",
+    subtitle: "Metrics-driven profile for lifecycle and growth teams",
+    initials: "GL",
+    details: ["Experimentation", "Funnels", "Retention"],
+    prompts: "8 growth strategy and outcomes prompts",
+  },
+  {
+    title: "Executive Profile",
+    subtitle: "Senior narrative for director, VP, and C-suite paths",
+    initials: "EP",
+    details: ["Strategy", "Operations", "Transformation"],
+    prompts: "12 executive narrative and impact prompts",
+  },
+];
+
 export default function ProfilesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
+  const [selectedTemplateTitle, setSelectedTemplateTitle] = useState(
+    profileTemplates[0].title,
+  );
   const [activeProfileTitle, setActiveProfileTitle] = useState<string | null>(
     null,
   );
@@ -38,6 +73,17 @@ export default function ProfilesPage() {
     setIsCreateOpen(true);
   }
 
+  function openTemplateSelection() {
+    setSelectedTemplateTitle(profileTemplates[0].title);
+    setIsTemplateOpen(true);
+  }
+
+  function useTemplate() {
+    setActiveProfileTitle(selectedTemplateTitle);
+    setIsTemplateOpen(false);
+    setIsCreateOpen(true);
+  }
+
   return (
     <ApplyShell
       activeNav="profiles"
@@ -46,8 +92,8 @@ export default function ProfilesPage() {
       onSearchChange={setSearchQuery}
       userInitials="PA"
     >
-      <div className="min-h-[calc(100vh-63px)] px-5 pb-0 pt-7 sm:px-10 xl:px-12">
-        <section className="mx-auto max-w-[928px]">
+      <div className="min-h-[calc(100vh-63px)] px-5 pb-0 pt-8 sm:px-8 lg:px-10 xl:px-12 2xl:px-16">
+        <section className="mx-auto w-full max-w-[3200px]">
           <PageHeader
             title="Profiles"
             subtitle="Manage reusable professional profiles"
@@ -58,7 +104,7 @@ export default function ProfilesPage() {
             onActionClick={openCreateProfile}
           />
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-8 grid w-full grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-4">
             {filteredProfiles.map((profile) => (
               <ProfileCard
                 key={profile.id}
@@ -68,11 +114,11 @@ export default function ProfilesPage() {
               />
             ))}
 
-            <NewTemplateCard onClick={openCreateProfile} />
+            <NewTemplateCard onClick={openTemplateSelection} />
           </div>
         </section>
 
-        <footer className="mx-auto mt-20 flex max-w-[928px] flex-col gap-6 border-t border-[#e4e6e9] py-8 text-[11px] text-[#4b4b4d] sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mx-auto mt-20 flex w-full max-w-[3200px] flex-col gap-6 border-t border-[#e4e6e9] py-8 text-[11px] text-[#4b4b4d] sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 ApplyFlow. All rights reserved.</p>
           <div className="flex gap-7">
             <a href="#">Privacy</a>
@@ -81,6 +127,116 @@ export default function ProfilesPage() {
           </div>
         </footer>
       </div>
+
+      {isTemplateOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/12 px-4 py-5 backdrop-blur-[12px] sm:px-6"
+          onClick={() => setIsTemplateOpen(false)}
+        >
+          <section
+            className="relative w-full max-w-[760px] overflow-hidden rounded-[8px] border border-white/65 bg-gradient-to-br from-white/78 via-white/62 to-slate-100/48 shadow-[0_34px_80px_rgba(15,23,42,0.22),0_1px_0_rgba(255,255,255,0.85)_inset] ring-1 ring-slate-900/5 backdrop-blur-[64px] backdrop-saturate-150"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsTemplateOpen(false)}
+              className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-[4px] border border-white/70 bg-white/55 text-[23px] font-light leading-none text-[#4b4b4d] shadow-[0_10px_22px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl transition hover:bg-white/75 hover:text-black"
+              aria-label="Close template selection"
+            >
+              &times;
+            </button>
+
+            <div className="border-t border-white/90 bg-white/24 px-6 pb-5 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] sm:px-8">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#4b4b4d]">
+                Profile Template
+              </p>
+              <h2 className="mt-3 max-w-[520px] text-[30px] font-semibold leading-tight tracking-[-0.035em] text-black">
+                Start from an industry baseline
+              </h2>
+              <p className="mt-2 max-w-[520px] text-[15px] leading-6 text-[#4b4b4d]">
+                Pick a focused starting point for a reusable professional
+                profile.
+              </p>
+            </div>
+
+            <div className="max-h-[58vh] overflow-y-auto px-6 py-5 [scrollbar-color:#c7c9cc_transparent] [scrollbar-width:thin] sm:px-8">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {profileTemplates.map((template) => {
+                  const isSelected = template.title === selectedTemplateTitle;
+
+                  return (
+                    <button
+                      key={template.title}
+                      type="button"
+                      onClick={() => setSelectedTemplateTitle(template.title)}
+                      className={`group min-h-[214px] rounded-[6px] border p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-2xl transition ${
+                        isSelected
+                          ? "border-black/45 bg-white/68 ring-2 ring-black/8"
+                          : "border-white/70 bg-white/42 hover:border-white hover:bg-white/58"
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px] text-[15px] font-semibold shadow-[0_10px_20px_rgba(0,0,0,0.08)] ${
+                            isSelected
+                              ? "bg-black text-white"
+                              : "border border-white/75 bg-white/60 text-black"
+                          }`}
+                        >
+                          {template.initials}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[19px] font-semibold tracking-[-0.03em] text-black">
+                            {template.title}
+                          </span>
+                          <span className="mt-1 block text-[13px] leading-5 text-[#596273]">
+                            {template.subtitle}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {template.details.map((detail) => (
+                          <span
+                            key={detail}
+                            className="rounded-[3px] border border-white/70 bg-white/50 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#3d4655] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
+                          >
+                            {detail}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="mt-5 border-t border-white/65 pt-4">
+                        <p className="text-[12px] leading-5 text-[#4b4b4d]">
+                          {template.prompts}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <footer className="grid grid-cols-2 gap-4 border-t border-white/65 bg-white/58 px-6 py-4 shadow-[0_-16px_32px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl sm:flex sm:items-center sm:justify-between sm:px-8">
+              <button
+                type="button"
+                onClick={() => setIsTemplateOpen(false)}
+                className="h-11 border border-white/75 bg-white/45 px-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#222426] shadow-[0_8px_18px_rgba(15,23,42,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] transition hover:bg-white/70 sm:min-w-[132px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={useTemplate}
+                className="h-11 rounded-[2px] bg-black px-8 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#111111] sm:min-w-[172px]"
+              >
+                Use Template
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
 
       {isCreateOpen ? (
         <div

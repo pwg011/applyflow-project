@@ -78,8 +78,8 @@ export default function Home() {
       onSearchChange={setSearchQuery}
       userInitials="PA"
     >
-      <div className="min-h-[calc(100vh-63px)] px-5 pb-0 pt-7 sm:px-10 xl:px-12">
-        <section className="mx-auto max-w-[928px]">
+      <div className="min-h-[calc(100vh-63px)] px-5 pb-0 pt-8 sm:px-8 lg:px-10 xl:px-12 2xl:px-16">
+        <section className="mx-auto w-full max-w-[3200px]">
           <PageHeader
             title="Jobs"
             subtitle="Track, prepare, and manage applications"
@@ -90,13 +90,13 @@ export default function Home() {
             onActionClick={() => setIsImportOpen(true)}
           />
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
             {stats.map((stat) => (
               <StatCard key={stat.label} label={stat.label} value={stat.value} />
             ))}
           </div>
 
-          <div className="mt-8 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_293px]">
+          <div className="mt-8 grid items-start gap-5 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(300px,22rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(340px,26rem)] 2xl:gap-7">
             <div className="space-y-4">
               {filteredJobs.map((job) => (
                 <JobRow
@@ -117,7 +117,7 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="mx-auto mt-20 flex max-w-[928px] flex-col gap-6 border-t border-[#e4e6e9] py-8 text-[11px] text-[#4b4b4d] sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mx-auto mt-20 flex w-full max-w-[3200px] flex-col gap-6 border-t border-[#e4e6e9] py-8 text-[11px] text-[#4b4b4d] sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 ApplyFlow. All rights reserved.</p>
           <div className="flex gap-7">
             <a href="#">Privacy</a>
